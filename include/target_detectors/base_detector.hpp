@@ -25,6 +25,8 @@ public:
 
   virtual const std::vector<Eigen::Vector3d>& getTargetCoords() const = 0;
 
+  virtual void displayInfo() const = 0;
+
 protected:
   CalibDetector(const bool _debug_display)
     : m_debug_display(_debug_display)

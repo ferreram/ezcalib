@@ -801,9 +801,6 @@ EZMonoCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
     exit(-1);
   }
 
-  const std::string dist_model = fsSettings["dist_model"].string();
-  const double prior_fov_deg = fsSettings["prior_fov"].real();
-
   const std::string target_type = fsSettings["target_type"].string();
 
   m_debug_display = static_cast<int>(fsSettings["debug"]);
@@ -821,17 +818,6 @@ EZMonoCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
                                                                 tag_size,
                                                                 tag_space,
                                                                 m_debug_display);
-
-    std::cout << "\n====================================\n";
-    std::cout << "\tProvided Calibration problem:\n";
-    std::cout << "\n- Target type: AprilGrid";
-    std::cout << "\n- Number of rows: " << nb_rows;
-    std::cout << "\n- Number of cols: " << nb_cols;
-    std::cout << "\n- Size of a tag: " << tag_size << " m";
-    std::cout << "\n- Space ratio between tags: " << tag_space << "(i.e. spacing of: " << tag_size*tag_space << " m)\n";
-    std::cout << "\n- Distortion model to be used: " << dist_model;
-    std::cout << "\n- Provided prior FOV: " << prior_fov_deg << " degree";
-    std::cout << "\n====================================\n";
   }
   else if (target_type == "chessboard")
   {
@@ -844,16 +830,6 @@ EZMonoCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
                                                                   nb_cols,
                                                                   square_size,
                                                                   m_debug_display);
-    
-    std::cout << "\n====================================\n";
-    std::cout << "\tProvided Calibration problem:\n";
-    std::cout << "\n- Target type: Chessboard";
-    std::cout << "\n- Number of rows: " << nb_rows;
-    std::cout << "\n- Number of cols: " << nb_cols;
-    std::cout << "\n- Size of a square: " << square_size << " m\n";
-    std::cout << "\n- Distortion model to be used: " << dist_model;
-    std::cout << "\n- Provided prior FOV: " << prior_fov_deg << " degree";
-    std::cout << "\n====================================\n";
   }
   else
   {
@@ -862,6 +838,8 @@ EZMonoCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
     std::cerr << "\nImplemented target types are : chessboard / aprilgrid\n";
     exit(-1);
   }
+
+  m_pcalib_detector->displayInfo();
 
   cv::waitKey(2000);
 }

@@ -1,0 +1,24 @@
+%YAML 1.0
+---
+
+input_images_folder:
+  - /data/ifremer/victor_stereo_cam/acquisition_mire/2021-10-18-06-46-04_images/left_images/
+  - /data/ifremer/victor_stereo_cam/acquisition_mire/2021-10-18-06-46-04_images/right_images/
+
+dist_model: # (rad1, rad2, rad3, radtan4, radtan5, radtan8, kannalabrandt)
+  - radtan5
+  - radtan5
+
+prior_fov: # Prior FOV of the camera in degrees
+  - 70.0
+  - 60.0
+
+
+target_type: "chessboard" # (chessboard / aprilgrid)
+
+target_nb_rows: 7
+target_nb_cols: 12
+
+square_size: 0.05
+
+debug: 0

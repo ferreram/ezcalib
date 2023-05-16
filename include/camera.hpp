@@ -38,10 +38,17 @@ class Camera
 public:
   Camera(const std::string& _config_file_path);
 
+  Camera(const std::string& _input_images_path,
+         const std::string& _dist_model, 
+         const double _prior_fov);
+
   void setupInitialDistortion(const std::string& _dist_model);
   void setupInitialCalibration(const cv::Size& _img_size);
 
   void displayCalibrationParameters() const;
+  void displayIntrinsicParameters() const;
+  void displayDistortionParameters() const;
+  void displayCameraInfo() const;
 
   int m_id = -1;
 

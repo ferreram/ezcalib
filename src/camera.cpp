@@ -12,17 +12,23 @@ Camera::Camera(const std::string& _config_file_path)
   }
 
   const std::string dist_model = fsSettings["dist_model"].string();
-  // dist_model.assign(fsSettings["dist_model"]);
+  m_prior_fov_deg = fsSettings["prior_fov"].real();
+  m_input_images_path = fsSettings["input_images_folder"].string();
 
   setupInitialDistortion(dist_model);
 
-  m_prior_fov_deg = fsSettings["prior_fov"].real();
+  displayCameraInfo();
+}
 
-  std::cout << "\nDistortion model initialized as:\n"; 
-  m_pdist_params->displayParams();
+Camera::Camera(const std::string& _input_images_path,
+               const std::string& _dist_model, 
+               const double _prior_fov)
+  : m_input_images_path(_input_images_path)
+  , m_prior_fov_deg(_prior_fov)
+{
+  setupInitialDistortion(_dist_model);
 
-  m_input_images_path = fsSettings["input_images_folder"].string();
-  std::cout << "\nGoing to take images from folder: " << m_input_images_path;
+  displayCameraInfo();
 }
 
 void 
@@ -87,9 +93,52 @@ Camera::setupInitialCalibration(const cv::Size& _img_size)
 void 
 Camera::displayCalibrationParameters() const
 {
-  std::cout << "\nIntrinsic Parameters:\n";
-  m_pcalib_params->displayParams();
+  displayIntrinsicParameters();
+  displayDistortionParameters();
+}
 
-  std::cout << "\nDistortion Parameters:\n";
-  m_pdist_params->displayParams();
+
+void 
+Camera::displayIntrinsicParameters() const
+{
+  if (m_pcalib_params != nullptr)
+  {
+    std::cout << "\nIntrinsic Parameters:\n";
+    m_pcalib_params->displayParams();
+  }
+  else
+  {
+    std::cout << "\nIntrinsic Parameters not intialized yet.\n";
+  }
+}
+
+
+void 
+Camera::displayDistortionParameters() const
+{
+  if (m_pdist_params != nullptr)
+  {
+    std::cout << "\nDistortion Parameters:\n";
+    m_pdist_params->displayParams();
+  }
+  else
+  {
+    std::cout << "\nDistortion Parameters not intialized yet.\n";
+  }
+}
+
+
+void 
+Camera::displayCameraInfo() const
+{
+  std::cout << "\n========================\n";
+  std::cout << "     Camera Info";
+  std::cout << "\n========================\n";
+
+  std::cout << "\nCamera related to images from: " << m_input_images_path << "\n";
+  std::cout << "\nPrior Field-of-View set as: " << m_prior_fov_deg << "\n";
+
+  std::cout << "\nCurrent Parameters are:\n";
+  std::cout << "----------------------------\n";
+  displayCalibrationParameters();
 }

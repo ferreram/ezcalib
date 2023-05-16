@@ -55,6 +55,18 @@ public:
     return m_vtgt_coords;
   }
 
+  void
+  displayInfo() const
+  {
+    std::cout << "\n====================================\n";
+    std::cout << "\tProvided Calibration problem:\n";
+    std::cout << "\n- Target type: Chessboard";
+    std::cout << "\n- Number of rows: " << m_nb_rows;
+    std::cout << "\n- Number of cols: " << m_nb_cols;
+    std::cout << "\n- Size of a square: " << m_square_size << " m\n";
+    std::cout << "\n====================================\n";
+  }
+
 private:
   void 
   setupCalibTarget()

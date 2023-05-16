@@ -72,18 +72,18 @@ target_link_libraries(${PROJECT_NAME}_mono
     Sophus::Sophus
 )
 
-add_executable(${PROJECT_NAME}_stereo apps/ezcalib_stereo.cpp
+add_executable(${PROJECT_NAME} apps/ezcalib.cpp
               src/ezcalibrator.cpp
               src/camera.cpp)
 
-target_include_directories(${PROJECT_NAME}_stereo
+target_include_directories(${PROJECT_NAME}
   PUBLIC
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/ethz_apriltag2/include
 )
 
-target_link_libraries(${PROJECT_NAME}_stereo
+target_link_libraries(${PROJECT_NAME}
   PRIVATE
     Ceres::ceres
     ${OpenCV_LIBS}
@@ -93,5 +93,4 @@ target_link_libraries(${PROJECT_NAME}_stereo
   INTERFACE
     Eigen3::Eigen
     Sophus::Sophus
-)
-            
+)       
