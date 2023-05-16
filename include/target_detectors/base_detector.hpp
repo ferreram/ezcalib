@@ -23,7 +23,7 @@ public:
 
   virtual bool detectTarget(const cv::Mat& _img, std::vector<cv::Point2f>& _v_corners_pts) = 0;
 
-  virtual const std::vector<Eigen::Vector3d>& getTargetCoords() = 0;
+  virtual const std::vector<Eigen::Vector3d>& getTargetCoords() const = 0;
 
 protected:
   CalibDetector(const bool _debug_display)

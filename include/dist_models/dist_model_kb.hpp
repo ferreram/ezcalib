@@ -63,6 +63,11 @@ public:
     m_k4 = _v_dist_coefs[3];
   }
 
+  std::vector<double> 
+  getDistParameters() const
+  {
+    return {m_k1, m_k2, m_k3, m_k4};
+  }
 
 private:
   double m_k1=0., m_k2=0.;

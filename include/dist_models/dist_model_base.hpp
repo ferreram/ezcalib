@@ -22,6 +22,8 @@ public:
   virtual void
   resetParameters(const std::vector<double> _v_dist_coefs) = 0;
 
+  virtual std::vector<double> getDistParameters() const = 0;
+
   int getNumberOfParameters() const
   {
     return m_nb_params;

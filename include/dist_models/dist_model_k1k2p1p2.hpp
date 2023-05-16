@@ -62,6 +62,12 @@ public:
     m_p2 = _v_dist_coefs[3];
   }
 
+  std::vector<double> 
+  getDistParameters() const
+  {
+    return {m_k1, m_k2, m_p1, m_p2};
+  }
+
 private:
   double m_k1=0., m_k2=0.;
   double m_p1=0., m_p2=0.;

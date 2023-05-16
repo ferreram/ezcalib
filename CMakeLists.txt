@@ -50,7 +50,8 @@ endif()
 add_subdirectory(ethz_apriltag2)
 
 add_executable(${PROJECT_NAME}_mono apps/ezcalib_mono.cpp
-              src/ezcalibrator.cpp)
+              src/ezcalibrator.cpp
+              src/camera.cpp)
 
 target_include_directories(${PROJECT_NAME}_mono
   PUBLIC
@@ -72,4 +73,25 @@ target_link_libraries(${PROJECT_NAME}_mono
 )
 
 add_executable(${PROJECT_NAME}_stereo apps/ezcalib_stereo.cpp
-              src/ezcalibrator.cpp)
+              src/ezcalibrator.cpp
+              src/camera.cpp)
+
+target_include_directories(${PROJECT_NAME}_stereo
+  PUBLIC
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/ethz_apriltag2/include
+)
+
+target_link_libraries(${PROJECT_NAME}_stereo
+  PRIVATE
+    Ceres::ceres
+    ${OpenCV_LIBS}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    stdc++fs
+    ethz_apriltag2
+  INTERFACE
+    Eigen3::Eigen
+    Sophus::Sophus
+)
+            

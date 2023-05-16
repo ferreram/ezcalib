@@ -39,9 +39,10 @@ public:
     const double xy_2 = 2.*x*y;
     
     const double r2 = x2 + y2;
+    const double r4 = r2 * r2;
 
-    const double D = (1. + r2*(m_k1 + m_k2*r2 + m_k3*r2*r2)) 
-                    / (1. + r2*(m_k4 + m_k5*r2 + m_k6*r2*r2));
+    const double D = (1. + r2*(m_k1 + m_k2*r2 + m_k3*r4)) 
+                    / (1. + r2*(m_k4 + m_k5*r2 + m_k6*r4));
 
     const double xd = x*D + m_p1*xy_2 + m_p2*(r2 +  2.*x2);
     const double yd = y*D + m_p2*xy_2 + m_p1*(r2 +  2.*y2);
@@ -69,6 +70,12 @@ public:
     m_k6 = _v_dist_coefs[5];
     m_p1 = _v_dist_coefs[6];
     m_p2 = _v_dist_coefs[7];
+  }
+
+  std::vector<double> 
+  getDistParameters() const
+  {
+    return {m_k1, m_k2, m_k3, m_k4, m_k5, m_k6, m_p1, m_p2};
   }
 
 private:

@@ -47,6 +47,12 @@ public:
     assert(static_cast<int>(_v_dist_coefs.size()) == m_nb_params);
     m_k1 = _v_dist_coefs[0];
   }
+  
+  std::vector<double> 
+  getDistParameters() const
+  {
+    return {m_k1};
+  }
 
 private:
   double m_k1 = 0.;

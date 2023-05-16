@@ -24,7 +24,8 @@ public:
     setupCalibTarget();
   }
 
-  bool detectTarget(const cv::Mat& _img, std::vector<cv::Point2f>& _v_corners_pts)
+  bool 
+  detectTarget(const cv::Mat& _img, std::vector<cv::Point2f>& _v_corners_pts)
   {
     const bool success = cv::findChessboardCorners(
                                   _img, 
@@ -48,13 +49,15 @@ public:
     return success;
   }
 
-  const std::vector<Eigen::Vector3d>& getTargetCoords()
+  const std::vector<Eigen::Vector3d>& 
+  getTargetCoords() const
   {
     return m_vtgt_coords;
   }
 
 private:
-  void setupCalibTarget()
+  void 
+  setupCalibTarget()
   {
     m_vtgt_coords.reserve((m_nb_rows-1)*(m_nb_cols-1));
 
