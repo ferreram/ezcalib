@@ -21,5 +21,7 @@ int main(int argc, char* argv[])
 
   ezmono_calibrator.runCalibration(&camera);
 
+  camera.writeCameraCalib("cam0_calib.yaml");
+
   return 0;
 }

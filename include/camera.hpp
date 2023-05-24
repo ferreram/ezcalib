@@ -45,10 +45,14 @@ public:
   void setupInitialDistortion(const std::string& _dist_model);
   void setupInitialCalibration(const cv::Size& _img_size);
 
+  Eigen::Vector2d undistortPx(const cv::Point2f& _corner_pt) const;
+
   void displayCalibrationParameters() const;
   void displayIntrinsicParameters() const;
   void displayDistortionParameters() const;
   void displayCameraInfo() const;
+
+  void writeCameraCalib(const std::string& _cam_name = "cam0_calib.yaml") const;
 
   int m_id = -1;
 
@@ -59,5 +63,8 @@ public:
 
   std::vector<CalibFrame> m_v_calib_frames;
 
+  Sophus::SE3d m_T_cam0_2_cam;
+
+  std::string m_dist_model = "";
   double m_prior_fov_deg = -1.;
 };

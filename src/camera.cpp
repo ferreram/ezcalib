@@ -1,5 +1,7 @@
 #include "camera.hpp"
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 
 Camera::Camera(const std::string& _config_file_path)
 {
@@ -11,11 +13,11 @@ Camera::Camera(const std::string& _config_file_path)
     exit(-1);
   }
 
-  const std::string dist_model = fsSettings["dist_model"].string();
+  m_dist_model = fsSettings["dist_model"].string();
   m_prior_fov_deg = fsSettings["prior_fov"].real();
   m_input_images_path = fsSettings["input_images_folder"].string();
 
-  setupInitialDistortion(dist_model);
+  setupInitialDistortion(m_dist_model);
 
   displayCameraInfo();
 }
@@ -24,9 +26,10 @@ Camera::Camera(const std::string& _input_images_path,
                const std::string& _dist_model, 
                const double _prior_fov)
   : m_input_images_path(_input_images_path)
+  , m_dist_model(_dist_model)
   , m_prior_fov_deg(_prior_fov)
 {
-  setupInitialDistortion(_dist_model);
+  setupInitialDistortion(m_dist_model);
 
   displayCameraInfo();
 }
@@ -90,6 +93,18 @@ Camera::setupInitialCalibration(const cv::Size& _img_size)
 }
 
 
+Eigen::Vector2d 
+Camera::undistortPx(const cv::Point2f& _corner_pt) const
+{
+  return  m_pcalib_params->projCamToImage(
+              m_pdist_params->undistortCamPoint(
+                  m_pcalib_params->projImageToCam(_corner_pt.x,
+                                                  _corner_pt.y)
+              )
+          );
+}
+
+
 void 
 Camera::displayCalibrationParameters() const
 {
@@ -141,4 +156,49 @@ Camera::displayCameraInfo() const
   std::cout << "\nCurrent Parameters are:\n";
   std::cout << "----------------------------\n";
   displayCalibrationParameters();
+}
+
+
+void
+Camera::writeCameraCalib(const std::string& _cam_name /*= "cam0"*/) const
+{
+  fs::path out_cam_path(_cam_name);
+
+  if (!out_cam_path.has_extension())
+  {
+    out_cam_path += ".yaml";
+  }
+  else if (out_cam_path.extension() != ".yaml")
+  {
+    out_cam_path.replace_extension("yaml");
+
+    std::cout << "\n\nProvided cam path was not a yaml file: " << _cam_name;
+    std::cout << "\nSwitching to new cam path: " << out_cam_path;
+  }
+  
+  if (fs::exists(out_cam_path))
+  {
+    fs::remove(out_cam_path);
+  }
+
+  cv::FileStorage cam_calib_file(out_cam_path.string(), cv::FileStorage::WRITE);
+
+  if(!cam_calib_file.isOpened()) 
+  {
+    std::cerr << "Failed to create " << out_cam_path << " calib file...";
+    exit(-1);
+  }
+
+  cam_calib_file.writeComment("Camera Calibration Parameters\n");
+
+  cam_calib_file.write("input_images_folder", m_input_images_path);
+  cam_calib_file.write("dist_model", m_dist_model);
+
+  const auto vcalib_params = m_pcalib_params->getParameters();
+  cam_calib_file.write("intrisics_Parameters", cv::Mat(vcalib_params));
+
+  const auto vdist_coefs = m_pdist_params->getDistParameters();
+  cam_calib_file.write("distortion_Coefs", cv::Mat(vdist_coefs));
+
+  std::cout << "\nCameras Calibration Results written to: " << out_cam_path << "!\n\n";
 }

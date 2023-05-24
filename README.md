@@ -15,6 +15,11 @@ Currently implemented distortion models:
 
 * Kannala-Brandt (large FOV) model : k1, k2, k3, k4
 
+Multi-camera calibration (stereo and N-cameras):
+
+* Only stereo has been evaluated yet
+* All cameras are registered with respect to cam0
+
 ## Dependencies
 
 * OpenCV 4
@@ -25,5 +30,5 @@ Note: OpenCV 3 should also work, modifiy the CMakeLists.txt accordingly if you d
 
 ## To come
 
-* Multi-camera calibration (stereo and N-cameras)
 * More images input (videos, rosbags, ...)
+* Better multi-camera calibration

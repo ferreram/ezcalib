@@ -24,25 +24,32 @@ public:
     std::cout << "\n Distortion p1 / p2 : " << m_p1 << " / " << m_p2 << "\n\n";
   }
 
-  Eigen::Vector2d distortCamPoint(const Eigen::Vector3d& _cam_pt) const override
+  Eigen::Vector2d distortCamPoint(const double _x, const double _y) const override
   {
-    const double inv_z = 1. / _cam_pt[2];
-    const double x = _cam_pt[0] * inv_z;
-    const double y = _cam_pt[1] * inv_z;
+    const double x2 = _x*_x;
+    const double y2 = _y*_y;
 
-    const double x2 = x*x;
-    const double y2 = y*y;
-
-    const double xy_2 = 2.*x*y;
+    const double xy_2 = 2.*_x*_y;
     
     const double r2 = x2 + y2;
 
     const double D = (1. + r2*(m_k1 + m_k2*r2 + m_k3*r2*r2));
 
-    const double xd = x*D + m_p1*xy_2 + m_p2*(r2 +  2.*x2);
-    const double yd = y*D + m_p2*xy_2 + m_p1*(r2 +  2.*y2);
+    const double xd = _x*D + m_p1*xy_2 + m_p2*(r2 +  2.*x2);
+    const double yd = _y*D + m_p2*xy_2 + m_p1*(r2 +  2.*y2);
 
     return Eigen::Vector2d(xd, yd);
+  }
+
+  Eigen::Vector2d distortCamPoint(const Eigen::Vector2d& _cam_pt) const override
+  {
+    return distortCamPoint(_cam_pt[0],_cam_pt[1]);
+  }
+
+  Eigen::Vector2d distortCamPoint(const Eigen::Vector3d& _cam_pt) const override
+  {
+    const double inv_z = 1. / _cam_pt[2];
+    return distortCamPoint(_cam_pt[0]*inv_z,_cam_pt[1]*inv_z);
   }
 
   ceres::CostFunction*

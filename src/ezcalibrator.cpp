@@ -760,10 +760,10 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   ceres::Solver::Summary summary;
   
   std::cout << "\n\n=========================================\n";
-  std::cout << "     Ceres based Calibration Refinement";
+  std::cout << "     Ceres based Extrinsic Calibration";
   std::cout << "\n=========================================\n";
 
-  std::cout << "\n0. Initial Parameters to Refine";
+  std::cout << "\n0. Initial Parameters";
   std::cout << "\n=================================\n";
   
   _v_cameras[1].m_pcalib_params->displayParams();
@@ -776,7 +776,7 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
   std::cout << summary.FullReport() << std::endl;
   
-  std::cout << "\nResults ";
+  std::cout << "\n1. Optimized Parameters ";
   std::cout << "\n=================================\n";
 
   std::cout << "\n" << v_Tcic0[0].translation().transpose() << "\n";
@@ -788,6 +788,11 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
   _v_cameras[1].m_pcalib_params->displayParams();
   _v_cameras[1].m_pdist_params->displayParams();
+
+  for (size_t i=1; i < nb_cams; ++i)
+  {
+    _v_cameras[i].m_T_cam0_2_cam = v_Tcic0[i-1];
+  }
 }
 
 void 

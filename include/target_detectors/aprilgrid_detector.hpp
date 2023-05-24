@@ -85,7 +85,7 @@ public:
     std::cout << "\n- Number of rows: " << m_nb_rows;
     std::cout << "\n- Number of cols: " << m_nb_cols;
     std::cout << "\n- Size of a tag: " << m_tag_size << " m";
-    std::cout << "\n- Space ratio between tags: " << m_tag_space << "(i.e. spacing of: " << m_tag_size * m_tag_space << " m)\n";
+    std::cout << "\n- Space ratio between tags: " << m_tag_space << " (i.e. spacing of: " << m_tag_size * m_tag_space << " m)\n";
     std::cout << "\n====================================\n";
   }
 

@@ -47,3 +47,46 @@ using AutoDiffLocalLeftSE3 =
 
 //   Sophus::SE3d m_Tc0ci_meas;
 // };
+
+struct AutoDiffReprojErr_Kernel
+{
+  AutoDiffReprojErr_Kernel(const double _u, const double _v,
+                          const Eigen::Vector3d& _wpt)
+      : m_px(_u,_v)
+      , m_wpt(_wpt)
+  {}
+
+  template <typename T>
+  bool operator()(const T *const _focal_param,
+                  const T *const _pp_param,
+                  const T *const _Tcw_param,
+                  T *_err) const
+  {
+    // Focal, Principal Point, Dist
+    const T fx = _focal_param[0];
+    const T fy = _focal_param[1];
+
+    const T cx = _pp_param[0];
+    const T cy = _pp_param[1];
+
+    Eigen::Map<const Sophus::SE3<T>> Tcw(_Tcw_param);
+
+    // Compute reproj err
+    const Eigen::Matrix<T,3,1> campt = Tcw * m_wpt;
+    const T invz = T(1. / campt[2]);
+
+    const T u = T(campt[0]) * invz * fx + cx;
+    const T v = T(campt[1]) * invz * fy + cy;
+
+    _err[0] = u - m_px.cast<T>()[0];
+    _err[1] = v - m_px.cast<T>()[1];
+
+    return true;
+  }
+
+  Eigen::Vector2d m_px;
+  Eigen::Vector3d m_wpt;
+};
+
+using AutoDiffReprojErr = 
+  ceres::AutoDiffCostFunction<AutoDiffReprojErr_Kernel, 2, 2, 2, 7>;

@@ -36,6 +36,11 @@ public:
     return m_invK * _px.homogeneous();
   }
 
+  Eigen::Vector3d projImageToCam(const double _u, const double _v) const
+  {
+    return projImageToCam(Eigen::Vector2d(_u,_v));
+  }
+
   Eigen::Vector2d projCamToImage(const Eigen::Vector3d& _un_cam_pt) const
   {
     const double inv_z = 1. / _un_cam_pt[2];
@@ -74,7 +79,6 @@ public:
     return (_u > -0.5f && _v > -0.5f && _u < img_cols_border && _v < img_rows_border);
   }
 
-
   void resetParameters(const double _fx, const double _fy,
                        const double _cx, const double _cy)
   {
@@ -82,6 +86,11 @@ public:
     m_cx = _cx; m_cy = _cy;
     
     setCalibMatrix();
+  }
+
+  std::vector<double> getParameters()
+  {
+    return {m_fx, m_fy, m_cx, m_cy};
   }
 
   double m_img_width, m_img_height;
