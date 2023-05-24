@@ -16,34 +16,42 @@ setupCameras(const std::string& _config_file_path,
 
   const cv::FileNode node_input_images = fsSettings["input_images_folder"];
 
-  const size_t nb_cams = node_input_images.size();
-
-  const cv::FileNode node_dist_models = fsSettings["dist_model"];
-  const cv::FileNode node_prior_fovs = fsSettings["prior_fov"];
-
-  if (node_dist_models.size() != nb_cams)
+  if (node_input_images.isSeq())
   {
-    std::cerr << "\nError!\n";
-    std::cerr << "\nConfig file must have as many dist models as provided input image folders!\n";
-    exit(-1);
+    const size_t nb_cams = node_input_images.size();
+
+
+    const cv::FileNode node_dist_models = fsSettings["dist_model"];
+    const cv::FileNode node_prior_fovs = fsSettings["prior_fov"];
+
+    if (node_dist_models.size() != nb_cams)
+    {
+      std::cerr << "\nError!\n";
+      std::cerr << "\nConfig file must have as many dist models as provided input image folders!\n";
+      exit(-1);
+    }
+    else if (node_prior_fovs.size() != nb_cams)
+    {
+      std::cerr << "\nError!\n";
+      std::cerr << "\nConfig file must have as many prior fovs as provided input image folders!\n";
+      exit(-1);
+    }
+
+    _v_cameras.reserve(nb_cams);
+
+    for (size_t i=0; i < nb_cams; ++i)
+    {
+      _v_cameras.emplace_back(node_input_images[i].string(),
+                              node_dist_models[i].string(),
+                              node_prior_fovs[i].real());
+    }
   }
-  else if (node_prior_fovs.size() != nb_cams)
+  else
   {
-    std::cerr << "\nError!\n";
-    std::cerr << "\nConfig file must have as many prior fovs as provided input image folders!\n";
-    exit(-1);
+    _v_cameras.emplace_back(_config_file_path);
   }
-
-  _v_cameras.reserve(nb_cams);
-
-  for (size_t i=0; i < nb_cams; ++i)
-  {
-    _v_cameras.emplace_back(node_input_images[i].string(),
-                            node_dist_models[i].string(),
-                            node_prior_fovs[i].real());
-
-    cv::waitKey(2000);
-  }
+  
+  cv::waitKey(2000);
 }
 
 
