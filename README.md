@@ -20,6 +20,12 @@ Multi-camera calibration (stereo and N-cameras):
 * Only stereo has been evaluated yet
 * All cameras are registered with respect to cam0
 
+# Usage
+
+``` bash
+./ezcalib config_file_path.yaml
+```
+
 ## Dependencies
 
 * OpenCV 4
