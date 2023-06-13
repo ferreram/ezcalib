@@ -73,25 +73,29 @@ writeMultiCameras(const std::vector<Camera>& _v_cameras,
     const auto& cam = _v_cameras[i];
 
     cam_calib_file.writeComment("Camera #" + std::to_string(i));
-    cam_calib_file.write("cam" + std::to_string(i), "");
 
-    cam_calib_file.write("  input_images_folder", cam.m_input_images_path);
-    cam_calib_file.write("  dist_model", cam.m_dist_model);
+    cam_calib_file << "cam" + std::to_string(i) << "[";
 
+    cam_calib_file << "{" << "input_images_folder" << cam.m_input_images_path << "}";
+    cam_calib_file << "{" << "dist_model" << cam.m_dist_model << "}";
+    
     const auto vcalib_params = cam.m_pcalib_params->getParameters();
-    cam_calib_file.write("  intrisics_Parameters", cv::Mat(vcalib_params).t());
+    cam_calib_file << "{" << "intrisics_parameters" << cv::Mat(vcalib_params).t() << "}";
 
     const auto vdist_coefs = cam.m_pdist_params->getDistParameters();
-    cam_calib_file.write("  distortion_Coefs", cv::Mat(vdist_coefs).t());
+    cam_calib_file << "{" << "distortion_coefs" << cv::Mat(vdist_coefs).t() << "}";
 
     if (i > 0)
     {
       const Eigen::Matrix<double,3,4> T_cam0_2_cam = cam.m_T_cam0_2_cam.matrix3x4();
-      cv::Mat T;
-      cv::eigen2cv(T_cam0_2_cam, T);
+      cv::Mat cv_T_cam0_2_cam;
+      cv::eigen2cv(T_cam0_2_cam, cv_T_cam0_2_cam);
+
       cam_calib_file.writeComment("Transformation from cam0 frame to cam #" + std::to_string(i) + " frame.");
-      cam_calib_file.write("  T_cam0_2_cam", T);
+      cam_calib_file << "{" << "T_cam0_2_cam" << cv_T_cam0_2_cam << "}";
     }
+
+    cam_calib_file << "]";
   }
 
   std::cout << "\nCameras Calibration Results written to: " << _out_cam_path << "!\n\n";
@@ -100,9 +104,9 @@ writeMultiCameras(const std::vector<Camera>& _v_cameras,
 
 int main(int argc, char* argv[])
 {
-  std::cout << "\n======================================\n";
+  std::cout << "\n===============================================\n";
   std::cout << "\tEZCalib - Multi-Camera Calibration";
-  std::cout << "\n======================================\n";
+  std::cout << "\n===============================================\n";
 
   if (argc < 2)
   {

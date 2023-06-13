@@ -160,7 +160,7 @@ Camera::displayCameraInfo() const
 
 
 void
-Camera::writeCameraCalib(const std::string& _cam_name /*= "cam0"*/) const
+Camera::writeCameraCalib(const std::string& _cam_name /*= "cam0_calib.yaml"*/) const
 {
   fs::path out_cam_path(_cam_name);
 
@@ -195,10 +195,10 @@ Camera::writeCameraCalib(const std::string& _cam_name /*= "cam0"*/) const
   cam_calib_file.write("dist_model", m_dist_model);
 
   const auto vcalib_params = m_pcalib_params->getParameters();
-  cam_calib_file.write("intrisics_Parameters", cv::Mat(vcalib_params));
+  cam_calib_file.write("intrisics_parameters", cv::Mat(vcalib_params));
 
   const auto vdist_coefs = m_pdist_params->getDistParameters();
-  cam_calib_file.write("distortion_Coefs", cv::Mat(vdist_coefs));
+  cam_calib_file.write("distortion_coefs", cv::Mat(vdist_coefs));
 
   std::cout << "\nCameras Calibration Results written to: " << out_cam_path << "!\n\n";
 }
