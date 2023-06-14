@@ -19,6 +19,7 @@ Multi-camera calibration (stereo and N-cameras):
 
 * Only stereo has been evaluated yet
 * All cameras are registered with respect to cam0
+* At this point, multi-cameras calibration requires that all cameras have an overlapping view with cam0
 
 # Usage
 

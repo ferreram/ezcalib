@@ -1,8 +1,5 @@
 #include "camera.hpp"
 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-
 Camera::Camera(const std::string& _config_file_path)
 {
   const cv::FileStorage fsSettings(_config_file_path, cv::FileStorage::READ);
@@ -156,49 +153,4 @@ Camera::displayCameraInfo() const
   std::cout << "\nCurrent Parameters are:\n";
   std::cout << "----------------------------\n";
   displayCalibrationParameters();
-}
-
-
-void
-Camera::writeCameraCalib(const std::string& _cam_name /*= "cam0_calib.yaml"*/) const
-{
-  fs::path out_cam_path(_cam_name);
-
-  if (!out_cam_path.has_extension())
-  {
-    out_cam_path += ".yaml";
-  }
-  else if (out_cam_path.extension() != ".yaml")
-  {
-    out_cam_path.replace_extension("yaml");
-
-    std::cout << "\n\nProvided cam path was not a yaml file: " << _cam_name;
-    std::cout << "\nSwitching to new cam path: " << out_cam_path;
-  }
-  
-  if (fs::exists(out_cam_path))
-  {
-    fs::remove(out_cam_path);
-  }
-
-  cv::FileStorage cam_calib_file(out_cam_path.string(), cv::FileStorage::WRITE);
-
-  if(!cam_calib_file.isOpened()) 
-  {
-    std::cerr << "Failed to create " << out_cam_path << " calib file...";
-    exit(-1);
-  }
-
-  cam_calib_file.writeComment("Camera Calibration Parameters\n");
-
-  cam_calib_file.write("input_images_folder", m_input_images_path);
-  cam_calib_file.write("dist_model", m_dist_model);
-
-  const auto vcalib_params = m_pcalib_params->getParameters();
-  cam_calib_file.write("intrisics_parameters", cv::Mat(vcalib_params));
-
-  const auto vdist_coefs = m_pdist_params->getDistParameters();
-  cam_calib_file.write("distortion_coefs", cv::Mat(vdist_coefs));
-
-  std::cout << "\nCameras Calibration Results written to: " << out_cam_path << "!\n\n";
 }

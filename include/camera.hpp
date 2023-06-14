@@ -51,9 +51,7 @@ public:
   void displayIntrinsicParameters() const;
   void displayDistortionParameters() const;
   void displayCameraInfo() const;
-
-  void writeCameraCalib(const std::string& _cam_name = "cam0_calib.yaml") const;
-
+  
   int m_id = -1;
 
   std::string m_input_images_path;
