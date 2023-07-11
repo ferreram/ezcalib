@@ -83,11 +83,11 @@ writeCamerasCalib(const std::vector<Camera>& _v_cameras,
     fs::remove(out_cam_path);
   }
 
-  std::ofstream cam_calib_file(_out_cam_path);
+  std::ofstream cam_calib_file(out_cam_path);
 
   if(!cam_calib_file.is_open()) 
   {
-    std::cerr << "Failed to create " << _out_cam_path << " calib file...";
+    std::cerr << "Failed to create " << out_cam_path << " calib file...";
     exit(-1);
   }
 
@@ -150,7 +150,7 @@ writeCamerasCalib(const std::vector<Camera>& _v_cameras,
     }
   }
 
-  std::cout << "\nCameras Calibration Results written to: " << _out_cam_path << "!\n\n";
+  std::cout << "\nCameras Calibration Results written to: " << out_cam_path << "!\n\n";
 }
 
 
