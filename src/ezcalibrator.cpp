@@ -59,7 +59,7 @@ EZMonoCalibrator::runCalibration(Camera* _pcamera)
   
   // Calibrate
   computeCalibration();
-  refineCalibration();
+  // refineCalibration();
 
   // Leave Camera pointer
   m_pcamera = nullptr;
