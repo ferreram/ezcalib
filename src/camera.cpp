@@ -1,5 +1,8 @@
 #include "camera.hpp"
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 Camera::Camera(const std::string& _config_file_path)
 {
   const cv::FileStorage fsSettings(_config_file_path, cv::FileStorage::READ);
@@ -14,6 +17,18 @@ Camera::Camera(const std::string& _config_file_path)
   m_prior_fov_deg = fsSettings["prior_fov"].real();
   m_input_images_path = fsSettings["input_images_folder"].string();
 
+  if (m_prior_fov_deg < 1.)
+  {
+    std::cerr << "Provided prior field of view should be positive!  Wrong value here: " << m_prior_fov_deg << "\n";
+    exit(-1);
+  }
+
+  if (!fs::exists(m_input_images_path))
+  {
+    std::cerr << "Provided image folder: " << m_input_images_path << " does not exist!\n";
+    exit(-1);
+  }
+
   setupInitialDistortion(m_dist_model);
 
   displayCameraInfo();
@@ -26,6 +41,18 @@ Camera::Camera(const std::string& _input_images_path,
   , m_dist_model(_dist_model)
   , m_prior_fov_deg(_prior_fov)
 {
+  if (m_prior_fov_deg < 1.)
+  {
+    std::cerr << "Provided prior field of view should be positive!  Wrong value here: " << m_prior_fov_deg << "\n";
+    exit(-1);
+  }
+
+  if (!fs::exists(m_input_images_path))
+  {
+    std::cerr << "Provided image folder: " << m_input_images_path << " does not exist!\n";
+    exit(-1);
+  }
+
   setupInitialDistortion(m_dist_model);
 
   displayCameraInfo();
@@ -64,7 +91,7 @@ Camera::setupInitialDistortion(const std::string& _dist_model)
   }
   else
   {
-    std::cerr << "\nNot implemented distortion model!\n";
+    std::cerr << "\nThe provided distortion model: " << _dist_model << " is not implemented!\n";
     exit(-1);
   }
 }
@@ -148,7 +175,7 @@ Camera::displayCameraInfo() const
   std::cout << "\n========================\n";
 
   std::cout << "\nCamera related to images from: " << m_input_images_path << "\n";
-  std::cout << "\nPrior Field-of-View set as: " << m_prior_fov_deg << "\n";
+  std::cout << "\nPrior Field-of-View set as: " << m_prior_fov_deg << "degrees.\n";
 
   std::cout << "\nCurrent Parameters are:\n";
   std::cout << "----------------------------\n";

@@ -12,15 +12,16 @@
 namespace fs = std::experimental::filesystem;
 
 
-EZMonoCalibrator::EZMonoCalibrator(const std::string& _config_file_path)
+EZCalibrator::EZCalibrator(const std::string& _config_file_path)
 {
   setupCalibrationProblem(_config_file_path);
 }
 
 void 
-EZMonoCalibrator::runCalibration(Camera* _pcamera)
+EZCalibrator::runCalibration(Camera* _pcamera)
 {
-  m_pcamera = _pcamera;
+  // Set m_pcamera to point on current camera to calibrate
+  m_pcamera = _pcamera; 
 
   // Get image files in ascending order
   std::set<fs::path> set_ordered_images;
@@ -66,7 +67,7 @@ EZMonoCalibrator::runCalibration(Camera* _pcamera)
 }
 
 bool 
-EZMonoCalibrator::processImage(const cv::Mat& _in_img, const std::string &_img_name /*= ""*/, const double _timestamp /*= -1.*/)
+EZCalibrator::processImage(const cv::Mat& _in_img, const std::string &_img_name /*= ""*/, const double _timestamp /*= -1.*/)
 {
   if (_in_img.empty())
     return false;
@@ -102,7 +103,7 @@ EZMonoCalibrator::processImage(const cv::Mat& _in_img, const std::string &_img_n
 
 
 void
-EZMonoCalibrator::computeCalibration()
+EZCalibrator::computeCalibration()
 {
   // Setup Calibration Optimization Problem!
   // =======================================
@@ -331,7 +332,7 @@ EZMonoCalibrator::computeCalibration()
 
 
 void
-EZMonoCalibrator::refineCalibration()
+EZCalibrator::refineCalibration()
 {
   // Setup Calibration Optimization Problem!
   // =======================================
@@ -532,7 +533,7 @@ EZMonoCalibrator::refineCalibration()
 
 // Compute Tcw with P3P-RANSAC OpenCV Impl.
 bool 
-EZMonoCalibrator::computeP3PRansac(
+EZCalibrator::computeP3PRansac(
   const std::vector<cv::Point2f>& _v_px_obs,
   const std::vector<Eigen::Vector3d>& _v_wpts,
   const IntrinsicsParam& _calib_params,
@@ -572,8 +573,12 @@ EZMonoCalibrator::computeP3PRansac(
                           rvec, tvec, false, 
                           1000, 4.0 / _calib_params.m_fx, 0.999, 
                           _v_inliers,
-                          CV_VERSION_MAJOR < 4 ? cv::SOLVEPNP_P3P 
-                                               : cv::SOLVEPNP_AP3P);
+                          #if CV_VERSION_MAJOR < 4 
+                            cv::SOLVEPNP_P3P 
+                          #else
+                            cv::SOLVEPNP_AP3P
+                          #endif
+                          );
   
   std::cout << "\n >>>>>>>> P3P nb inliers : " << _v_inliers.size() << " out of " << v_wpts.size() << " pts\n";
 
@@ -599,7 +604,7 @@ EZMonoCalibrator::computeP3PRansac(
 
 
 void
-EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
+EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 {
   // Setup Calibration Optimization Problem!
   // =======================================
@@ -609,14 +614,14 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
   const size_t nb_cams = _v_cameras.size();
 
-  std::vector<std::array<double,2>> v_opt_focal_param(nb_cams-1);
-  std::vector<std::array<double,2>> v_opt_pp_param(nb_cams-1);
-  std::vector<std::vector<double>> v_opt_dist_param(nb_cams-1);
+  std::vector<std::array<double,2>> v_focal_param(nb_cams-1);
+  std::vector<std::array<double,2>> v_pp_param(nb_cams-1);
+  std::vector<std::vector<double>> v_dist_param(nb_cams-1);
 
   const std::vector<Eigen::Vector3d> &v_tgt_coords = m_pcalib_detector->getTargetCoords();
 
-  std::vector<Sophus::SE3d> v_Tcic0;
-  v_Tcic0.reserve(nb_cams-1);
+  std::vector<Sophus::SE3d> v_opt_Tcic0;
+  v_opt_Tcic0.reserve(nb_cams-1);
 
   const auto& cam0 = _v_cameras[0];
 
@@ -625,17 +630,17 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   {
     const auto& camj = _v_cameras[i];
 
-    v_opt_focal_param[i-1] = {camj.m_pcalib_params->m_fx, camj.m_pcalib_params->m_fy};
-    v_opt_pp_param[i-1] = {camj.m_pcalib_params->m_cx, camj.m_pcalib_params->m_cy};
-    v_opt_dist_param[i-1] = camj.m_pdist_params->getDistParameters();
+    v_focal_param[i-1] = {camj.m_pcalib_params->m_fx, camj.m_pcalib_params->m_fy};
+    v_pp_param[i-1] = {camj.m_pcalib_params->m_cx, camj.m_pcalib_params->m_cy};
+    v_dist_param[i-1] = camj.m_pdist_params->getDistParameters();
 
-    problem.AddParameterBlock(v_opt_focal_param.back().data(), 2);
-    problem.AddParameterBlock(v_opt_pp_param.back().data(), 2);
-    problem.AddParameterBlock(v_opt_dist_param.back().data(), v_opt_dist_param.back().size());
+    problem.AddParameterBlock(v_focal_param.back().data(), 2);
+    problem.AddParameterBlock(v_pp_param.back().data(), 2);
+    problem.AddParameterBlock(v_dist_param.back().data(), v_dist_param.back().size());
 
-    problem.SetParameterBlockConstant(v_opt_focal_param.back().data());
-    problem.SetParameterBlockConstant(v_opt_pp_param.back().data());
-    problem.SetParameterBlockConstant(v_opt_dist_param.back().data());
+    problem.SetParameterBlockConstant(v_focal_param.back().data());
+    problem.SetParameterBlockConstant(v_pp_param.back().data());
+    problem.SetParameterBlockConstant(v_dist_param.back().data());
 
     std::array<std::vector<double>,6ul> tab_Tcic0_v_coefs;
     for (size_t j=0ul; j < 6ul; ++j)
@@ -681,11 +686,11 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
     // const Sophus::SE3d Tc0w = cam0.m_v_calib_frames[0].m_T_world_2_cam;
     // const Sophus::SE3d Tciw = camj.m_v_calib_frames[0].m_T_world_2_cam;
-    // v_Tcic0.push_back(Tciw * Tc0w.inverse());
-    v_Tcic0.push_back(Sophus::SE3d::exp(med_T_log));
+    // v_opt_Tcic0.push_back(Tciw * Tc0w.inverse());
+    v_opt_Tcic0.push_back(Sophus::SE3d::exp(med_T_log));
 
     ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
-    problem.AddParameterBlock(v_Tcic0.back().data(), 7, local_param);
+    problem.AddParameterBlock(v_opt_Tcic0.back().data(), 7, local_param);
   }
 
   for (size_t i = 0ul; i < cam0.m_v_calib_frames.size(); ++i)
@@ -732,10 +737,10 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
             problem.AddResidualBlock(
                         f, loss_function,
-                        v_opt_focal_param[j-1].data(), 
-                        v_opt_pp_param[j-1].data(),
-                        v_opt_dist_param[j-1].data(),
-                        v_Tcic0[j-1].data());
+                        v_focal_param[j-1].data(), 
+                        v_pp_param[j-1].data(),
+                        v_dist_param[j-1].data(),
+                        v_opt_Tcic0[j-1].data());
           }
 
           break;
@@ -766,11 +771,19 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   std::cout << "\n0. Initial Parameters";
   std::cout << "\n=================================\n";
   
-  _v_cameras[1].m_pcalib_params->displayParams();
-  _v_cameras[1].m_pdist_params->displayParams();
+  for (size_t i=1ul; i < nb_cams; ++i)
+  {
+    std::cout << "\nCam #" << i << ":\n";
 
-  std::cout << "\n" << v_Tcic0[0].translation().transpose() << "\n";
-  std::cout << v_Tcic0[0].rotationMatrix() << "\n";
+    _v_cameras[i].m_pcalib_params->displayParams();
+    _v_cameras[i].m_pdist_params->displayParams();
+
+    std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
+    std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
+  }
+
+  std::cout << "\n" << v_opt_Tcic0[0].translation().transpose() << "\n";
+  std::cout << v_opt_Tcic0[0].rotationMatrix() << "\n";
 
   ceres::Solve(options, &problem, &summary);
 
@@ -779,24 +792,20 @@ EZMonoCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   std::cout << "\n1. Optimized Parameters ";
   std::cout << "\n=================================\n";
 
-  std::cout << "\n" << v_Tcic0[0].translation().transpose() << "\n";
-  std::cout << v_Tcic0[0].rotationMatrix() << "\n";
-
-  _v_cameras[1].m_pcalib_params->resetParameters(v_opt_focal_param[0][0], v_opt_focal_param[0][1], 
-                                                v_opt_pp_param[0][0], v_opt_pp_param[0][1]);
-  _v_cameras[1].m_pdist_params->resetParameters(v_opt_dist_param[0]);
-
-  _v_cameras[1].m_pcalib_params->displayParams();
-  _v_cameras[1].m_pdist_params->displayParams();
-
-  for (size_t i=1; i < nb_cams; ++i)
+  for (size_t i=1ul; i < nb_cams; ++i)
   {
-    _v_cameras[i].m_T_cam0_2_cam = v_Tcic0[i-1];
+    std::cout << "\nCam #" << i << ":\n";
+
+    _v_cameras[i].m_pcalib_params->displayParams();
+    _v_cameras[i].m_pdist_params->displayParams();
+
+    std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
+    std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
   }
 }
 
 void 
-EZMonoCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
+EZCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
 {
   const cv::FileStorage fsSettings(_config_file_path, cv::FileStorage::READ);
 

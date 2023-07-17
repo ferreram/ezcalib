@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(ethz_apriltag2)
 
@@ -12,7 +12,7 @@ endif()
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-march=native -O3")
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
@@ -22,12 +22,21 @@ if(OPENMP_FOUND)
 endif()
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV 4 REQUIRED NO_DEFAULT_PATH PATHS /home/maxime/libraries/opencv_4/install/)
+find_package(OpenCV 3 REQUIRED)
+
+if (Eigen3_FOUND)
+  message(STATUS "Found Eigen3 lib : ${Eigen3_VERSION} - ${EIGEN3_INCLUDE_DIRS}")
+endif (Eigen3_FOUND)
+
+if (OpenCV_FOUND)
+  message(STATUS "Found OpenCV lib : ${OpenCV_VERSION} - ${OpenCV_INCLUDE_DIRS}")
+endif (OpenCV_FOUND)
 
 
 #library
 file(GLOB SOURCE_FILES "src/*.cc")
-add_library(${PROJECT_NAME}  ${SOURCE_FILES})
+add_library(${PROJECT_NAME} SHARED 
+            ${SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC

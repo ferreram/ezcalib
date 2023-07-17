@@ -108,6 +108,9 @@ writeCamerasCalib(const std::vector<Camera>& _v_cameras,
     cam_calib_file << "  input_images_folder: " << cam.m_input_images_path << "\n";
     cam_calib_file << "  dist_model: " << cam.m_dist_model << "\n";
     
+    cam_calib_file << "  image_size: [" << static_cast<int>(cam.m_pcalib_params->m_img_width)
+                                << ", " << static_cast<int>(cam.m_pcalib_params->m_img_height) << "]\n";
+                                
     const auto vcalib_params = cam.m_pcalib_params->getParameters();
     cam_calib_file << "  intrisics_parameters: ["; 
     for (size_t j=0; j < vcalib_params.size(); ++j)
@@ -169,7 +172,7 @@ int main(int argc, char* argv[])
   // Setup Calib Problem
   const std::string calib_config_path = argv[1];
 
-  EZMonoCalibrator ezmono_calibrator(calib_config_path);
+  EZCalibrator ezmono_calibrator(calib_config_path);
 
   std::vector<Camera> v_cameras; 
   setupCameras(calib_config_path, v_cameras);

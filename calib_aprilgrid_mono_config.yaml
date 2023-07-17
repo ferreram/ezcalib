@@ -1,0 +1,18 @@
+%YAML 1.0
+---
+
+input_images_folder: "/data/ifremer/victor_stereo_cam/acquisition_mire/2021-10-18-06-31-22_images/left_images/"
+
+dist_model: "radtan5" # (rad1, rad2, rad3, radtan4, radtan5, radtan8, kannalabrandt)
+
+prior_fov: 70.0 # Prior FOV of the camera in degrees
+
+target_type: "aprilgrid" # (chessboard / aprilgrid)
+
+target_nb_rows: 5
+target_nb_cols: 8
+
+tag_size: 0.06
+tag_space: 0.25 # ratio of size of tags wrt. size of space between tags.
+
+debug: 0

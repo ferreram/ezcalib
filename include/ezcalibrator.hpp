@@ -6,10 +6,10 @@
 #include "target_detectors/chessboard_detector.hpp"
 
 
-class EZMonoCalibrator
+class EZCalibrator
 {
 public:
-  EZMonoCalibrator(const std::string& _config_file_path);
+  EZCalibrator(const std::string& _config_file_path);
 
   void runCalibration(Camera* _pcamera);
 

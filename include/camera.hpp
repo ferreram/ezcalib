@@ -34,7 +34,7 @@ struct CalibFrame
 
 class Camera
 {
-  // EZMonoCalibrator should process Camera objects!
+  // EZCalibrator should process Camera objects!
 public:
   Camera(const std::string& _config_file_path);
 

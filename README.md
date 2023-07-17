@@ -17,23 +17,58 @@ Currently implemented distortion models:
 
 Multi-camera calibration (stereo and N-cameras):
 
-* Only stereo has been evaluated yet
 * All cameras are registered with respect to cam0
-* At this point, multi-cameras calibration requires that all cameras have an overlapping view with cam0
+* At this point, only stereo has been evaluated yet and multi-cameras calibration requires that all cameras have an overlapping view with cam0
 
-# Usage
+---
+
+## Usage
 
 ``` bash
-./ezcalib config_file_path.yaml
+$ ./ezcalib config_file_path.yaml  (optionnal: out_calib_file_path)
 ```
+
+We provide different config files as examples:
+- calib_aprilgrid_mono_config.yaml
+- calib_chessboard_mono_config.yaml
+- calib_chessboard_stereo_config.yaml
+- ...
+
+---
 
 ## Dependencies
 
-* OpenCV 4
+
+* OpenCV 3 or 4
 * Ceres : https://github.com/ceres-solver/ceres-solver
 * Sophus : https://github.com/strasdat/Sophus
 
 Note: OpenCV 3 should also work, modifiy the CMakeLists.txt accordingly if you do not have OpenCV 4.  The current implementation does not yet follow the new Manifold paradigm but still relies on the LocalParametrization.
+
+---
+
+## Install
+
+For convenience, we provide compatible version of ceres and sophus in the thirdparty folder.
+You can build them as follows:
+
+``` bash
+$ chmod +x build_thirdparty.sh
+$ ./build_thirdparty.sh
+```
+
+If you wish to use your own version of ceres and sophus, you can skip this step.
+
+Then, you can simply build ezcalib as follows:
+
+``` bash
+$ mkdir build
+$ cd build/
+$ cmake ..
+$ make -j4
+```
+
+---
 
 ## To come
 
