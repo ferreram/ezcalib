@@ -63,8 +63,8 @@ public:
   {
     // The 0.5 offset is due to OpenCV coords,
     // which are (0.,0.) at center of the top left-pixel
-    static const double img_cols_border = m_img_width - 0.5;
-    static const double img_rows_border = m_img_height - 0.5;
+    static const double img_cols_border = static_cast<double>(m_img_width) - 0.5;
+    static const double img_rows_border = static_cast<double>(m_img_height) - 0.5;
 
     return (_u > -0.5 && _v > -0.5 && _u < img_cols_border && _v < img_rows_border);
   }

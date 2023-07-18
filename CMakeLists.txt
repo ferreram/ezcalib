@@ -27,12 +27,11 @@ if (Eigen3_FOUND)
   message(STATUS "Found Eigen3 lib : ${Eigen3_VERSION} - ${EIGEN3_INCLUDE_DIRS}")
 endif (Eigen3_FOUND)
 
+find_package(OpenCV REQUIRED)
 
-find_package(OpenCV 3 REQUIRED)
-
-if (OpenCV_FOUND)
-  message(STATUS "Found OpenCV lib : ${OpenCV_VERSION} - ${OpenCV_INCLUDE_DIRS}")
-endif (OpenCV_FOUND)
+if(OpenCV_VERSION_MAJOR LESS 3)
+  message( FATAL_ERROR "OpenCV 3 or 4 is required!  Current version : ${OpenCV_VERSION}" )
+endif()
 
 
 #Sophus

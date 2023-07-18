@@ -22,7 +22,12 @@ if(OPENMP_FOUND)
 endif()
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV 3 REQUIRED)
+
+find_package(OpenCV REQUIRED)
+
+if(OpenCV_VERSION_MAJOR LESS 3)
+  message( FATAL_ERROR "OpenCV 3 or 4 is required!  Current version : ${OpenCV_VERSION}" )
+endif()
 
 if (Eigen3_FOUND)
   message(STATUS "Found Eigen3 lib : ${Eigen3_VERSION} - ${EIGEN3_INCLUDE_DIRS}")
