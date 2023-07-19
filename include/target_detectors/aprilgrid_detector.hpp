@@ -133,19 +133,19 @@ private:
       cv::cvtColor(_img, img_2_draw, cv::COLOR_GRAY2BGR);
     }
     
+    if (!_success)
+    {
+      cv::putText(img_2_draw, 
+                  "Fail to detect enough tags!", 
+                  cv::Point2f(50.f,50.f), 
+                  cv::FONT_HERSHEY_SIMPLEX, 
+                  1, 
+                  cv::Scalar(0,0,255), 
+                  3); 
+    }
+    
     for (const auto& det : _vdet)
     {
-      if (!_success)
-      {
-        cv::putText(img_2_draw, 
-                    "Fail to detect enough tags!", 
-                    cv::Point2f(50.f,50.f), 
-                    cv::FONT_HERSHEY_SIMPLEX, 
-                    1, 
-                    cv::Scalar(0,0,255), 
-                    3); 
-      }
-
       cv::putText(img_2_draw, 
                   std::to_string(det.id), 
                   cv::Point2f(det.cxy.first,det.cxy.second), 
