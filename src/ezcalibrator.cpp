@@ -57,6 +57,8 @@ EZCalibrator::runCalibration(Camera* _pcamera)
       std::cout << "\nNo target detected!  Going to skip the next " << nb_consec_bad_img / 2 << " images for speed-up\n";
     }
   }
+
+  std::cout << "\n#" << m_pcamera->m_v_calib_frames.size() << " / " << set_ordered_images.size() << " images successfully registered for calibration!\n";
   
   // Calibrate
   computeCalibration();
@@ -132,7 +134,13 @@ EZCalibrator::computeCalibration()
 
   for (auto& calib_frame : m_pcamera->m_v_calib_frames)
   {
-    ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // ceres::LocalParameterization *local_param = new SE3LeftParameterization;
+    ceres::LocalParameterization *local_param;
+    if (m_use_autodiff)
+      local_param = new AutoDiffLocalLeftSE3;
+    else
+      local_param = new SE3LeftParameterization;
     problem.AddParameterBlock(calib_frame.m_T_world_2_cam.data(), 7, local_param);
 
     for (size_t j = 0ul; j < v_tgt_coords.size(); ++j)
@@ -145,8 +153,9 @@ EZCalibrator::computeCalibration()
 
       ceres::CostFunction* f = 
           m_pcamera->m_pdist_params->createCeresCostFunction(calib_frame.m_v_corners_px[j].x, 
-                                                            calib_frame.m_v_corners_px[j].y,
-                                                            v_tgt_coords[j]);
+                                                             calib_frame.m_v_corners_px[j].y,
+                                                             v_tgt_coords[j],
+                                                             m_use_autodiff);
 
       problem.AddResidualBlock(
                   f, loss_function,
@@ -167,7 +176,7 @@ EZCalibrator::computeCalibration()
   options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
   options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
 
-  options.num_threads = 8;
+  options.num_threads = 1;
   options.max_num_iterations = 1000;
 
   options.minimizer_progress_to_stdout = false;
@@ -366,7 +375,12 @@ EZCalibrator::refineCalibration()
       continue;
     }
 
-    ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    ceres::LocalParameterization *local_param;
+    if (m_use_autodiff)
+      local_param = new AutoDiffLocalLeftSE3;
+    else
+      local_param = new SE3LeftParameterization;
     problem.AddParameterBlock(calib_frame.m_T_world_2_cam.data(), 7, local_param);
 
     for (size_t j = 0ul; j < v_tgt_coords.size(); ++j)
@@ -379,8 +393,9 @@ EZCalibrator::refineCalibration()
 
       ceres::CostFunction* f = 
           m_pcamera->m_pdist_params->createCeresCostFunction(calib_frame.m_v_corners_px[j].x, 
-                                                            calib_frame.m_v_corners_px[j].y,
-                                                            v_tgt_coords[j]);
+                                                             calib_frame.m_v_corners_px[j].y,
+                                                             v_tgt_coords[j],
+                                                             m_use_autodiff);
 
       // const ceres::ResidualBlockId res_id =
       problem.AddResidualBlock(
@@ -402,7 +417,7 @@ EZCalibrator::refineCalibration()
   options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
   options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
 
-  options.num_threads = 8;
+  options.num_threads = 1;
   options.max_num_iterations = 1000;
 
   options.minimizer_progress_to_stdout = false;
@@ -689,7 +704,12 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
     // v_opt_Tcic0.push_back(Tciw * Tc0w.inverse());
     v_opt_Tcic0.push_back(Sophus::SE3d::exp(med_T_log));
 
-    ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    ceres::LocalParameterization *local_param;
+    if (m_use_autodiff)
+      local_param = new AutoDiffLocalLeftSE3;
+    else
+      local_param = new SE3LeftParameterization;
     problem.AddParameterBlock(v_opt_Tcic0.back().data(), 7, local_param);
   }
 
@@ -733,7 +753,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
             ceres::CostFunction* f = 
                 camj.m_pdist_params->createCeresCostFunction(calib_framej.m_v_corners_px[k].x, 
                                                              calib_framej.m_v_corners_px[k].y,
-                                                             cam0_tgt_coords[k]);
+                                                             cam0_tgt_coords[k],
+                                                             m_use_autodiff);
 
             problem.AddResidualBlock(
                         f, loss_function,
@@ -757,7 +778,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
   options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
 
-  options.num_threads = 8;
+  options.num_threads = 1;
   options.max_num_iterations = 1000;
 
   options.minimizer_progress_to_stdout = false;
@@ -813,6 +834,11 @@ EZCalibrator::setupCalibrationProblem(const std::string& _config_file_path)
   {
     std::cerr << "Failed to open settings file...";
     exit(-1);
+  }
+
+  if (!fsSettings["use_autodiff"].empty())
+  {
+    m_use_autodiff = static_cast<int>(fsSettings["use_autodiff"]);
   }
 
   const std::string target_type = fsSettings["target_type"].string();

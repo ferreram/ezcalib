@@ -58,11 +58,11 @@ public:
   }
 
   ceres::CostFunction*
-  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
   {
     return  new ceres::AutoDiffCostFunction<
                 AutoDiffRadTan8Calib_Kernel, 2, 2, 2, 8, 7>(
-                    new AutoDiffRadTan8Calib_Kernel( _u, _v, _wpt));
+                    new AutoDiffRadTan8Calib_Kernel(_u, _v, _wpt));
   }
 
   void

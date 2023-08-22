@@ -53,11 +53,11 @@ public:
   }
 
   ceres::CostFunction*
-  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
   {
     return  new ceres::AutoDiffCostFunction<
                 AutoDiffKB4Calib_Kernel, 2, 2, 2, 4, 7>(
-                    new AutoDiffKB4Calib_Kernel( _u, _v, _wpt));
+                    new AutoDiffKB4Calib_Kernel(_u, _v, _wpt));
   }
   
   void

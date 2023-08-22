@@ -70,7 +70,7 @@ public:
   }
 
   virtual ceres::CostFunction*
-  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const = 0;
+  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const = 0;
 
   virtual void
   resetParameters(const std::vector<double> _v_dist_coefs) = 0;

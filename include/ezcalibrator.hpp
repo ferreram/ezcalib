@@ -35,4 +35,6 @@ private:
   std::unique_ptr<CalibDetector> m_pcalib_detector;
   
   bool m_debug_display;
+
+  bool m_use_autodiff = true;
 };

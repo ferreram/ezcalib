@@ -29,7 +29,7 @@
 //   virtual Eigen::Vector2d distortCamPoint(const Eigen::Vector3d& _cam_pt) const = 0;
 
 //   virtual ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const = 0;
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const = 0;
 
 //   virtual void
 //   resetParameters(const std::vector<double> _v_dist_coefs) = 0;
@@ -79,11 +79,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffRad1Calib_Kernel, 2, 2, 2, 1, 7>(
-//                     new AutoDiffRad1Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffRad1Calib_Kernel(_u, _v, _wpt));
 //   }
   
 //   void
@@ -129,11 +129,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffRad2Calib_Kernel, 2, 2, 2, 2, 7>(
-//                     new AutoDiffRad2Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffRad2Calib_Kernel(_u, _v, _wpt));
 //   }
   
 //   void
@@ -181,11 +181,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffRad3Calib_Kernel, 2, 2, 2, 3, 7>(
-//                     new AutoDiffRad3Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffRad3Calib_Kernel(_u, _v, _wpt));
 //   }
 
 //   void
@@ -244,11 +244,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffRadTan4Calib_Kernel, 2, 2, 2, 4, 7>(
-//                     new AutoDiffRadTan4Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffRadTan4Calib_Kernel(_u, _v, _wpt));
 //   }
 
 //   void
@@ -310,11 +310,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffRadTan5Calib_Kernel, 2, 2, 2, 5, 7>(
-//                     new AutoDiffRadTan5Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffRadTan5Calib_Kernel(_u, _v, _wpt));
 //   }
 
 //   void
@@ -381,11 +381,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffRadTan8Calib_Kernel, 2, 2, 2, 8, 7>(
-//                     new AutoDiffRadTan8Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffRadTan8Calib_Kernel(_u, _v, _wpt));
 //   }
 
 //   void
@@ -452,11 +452,11 @@
 //   }
 
 //   ceres::CostFunction*
-//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const override
+//   createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt, const bool _use_autodiff) const override
 //   {
 //     return  new ceres::AutoDiffCostFunction<
 //                 AutoDiffKB4Calib_Kernel, 2, 2, 2, 4, 7>(
-//                     new AutoDiffKB4Calib_Kernel( _u, _v, _wpt));
+//                     new AutoDiffKB4Calib_Kernel(_u, _v, _wpt));
 //   }
   
 //   void
