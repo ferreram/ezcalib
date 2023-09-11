@@ -176,7 +176,7 @@ EZCalibrator::computeCalibration()
   options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
   options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
 
-  options.num_threads = 1;
+  options.num_threads = 8;
   options.max_num_iterations = 1000;
 
   options.minimizer_progress_to_stdout = false;
@@ -417,7 +417,7 @@ EZCalibrator::refineCalibration()
   options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
   options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
 
-  options.num_threads = 1;
+  options.num_threads = 8;
   options.max_num_iterations = 1000;
 
   options.minimizer_progress_to_stdout = false;
@@ -778,7 +778,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
   options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
 
-  options.num_threads = 1;
+  options.num_threads = 8;
   options.max_num_iterations = 1000;
 
   options.minimizer_progress_to_stdout = false;

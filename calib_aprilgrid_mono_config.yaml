@@ -15,4 +15,4 @@ target_nb_cols: 8
 tag_size: 0.06
 tag_space: 0.25 # ratio of size of tags wrt. size of space between tags.
 
-debug: 0
+debug: 1

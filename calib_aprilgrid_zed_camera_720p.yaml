@@ -1,0 +1,25 @@
+%YAML 1.0
+---
+
+input_images_folder:
+  - /media/maxime/Transcend/Zed_calib/1689164022.9189167/left/
+  - /media/maxime/Transcend/Zed_calib/1689164022.9189167/right/
+
+dist_model: # (rad1, rad2, rad3, radtan4, radtan5, radtan8, kannalabrandt)
+  - radtan5
+  - radtan5
+
+prior_fov: # Prior FOV of the camera in degrees
+  - 80.0
+  - 80.0
+
+
+target_type: "aprilgrid" # (chessboard / aprilgrid)
+
+target_nb_rows: 5
+target_nb_cols: 8
+
+tag_size: 0.06
+tag_space: 0.25 # ratio of size of tags wrt. size of space between tags.
+
+debug: 0
