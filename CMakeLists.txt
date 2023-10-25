@@ -85,7 +85,7 @@ target_link_libraries(${PROJECT_NAME}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     stdc++fs
     ethz_apriltag2
+    Sophus::Sophus
   INTERFACE
     Eigen3::Eigen
-    Sophus::Sophus
 )       
