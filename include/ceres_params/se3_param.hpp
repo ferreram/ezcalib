@@ -78,8 +78,8 @@ struct AutoDiffReprojErr_Kernel
     const T u = T(campt[0]) * invz * fx + cx;
     const T v = T(campt[1]) * invz * fy + cy;
 
-    _err[0] = u - m_px.cast<T>()[0];
-    _err[1] = v - m_px.cast<T>()[1];
+    _err[0] = u - T(m_px[0]);
+    _err[1] = v - T(m_px[1]);
 
     return true;
   }
