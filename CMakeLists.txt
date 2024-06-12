@@ -11,7 +11,7 @@ endif()
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-march=native -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 
 ##################
 ## Dependencies ##
@@ -65,6 +65,8 @@ endif()
 ## Build ##
 ###########
 
+add_subdirectory(thirdparty/backward-cpp)
+
 add_subdirectory(ethz_apriltag2)
 
 add_executable(${PROJECT_NAME} apps/ezcalib.cpp
@@ -79,6 +81,8 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
+  PUBLIC
+    Backward::Interface
   PRIVATE
     Ceres::ceres
     ${OpenCV_LIBS}
