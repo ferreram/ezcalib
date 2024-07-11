@@ -45,6 +45,8 @@ We provide different config files as examples:
 
 Note: OpenCV 3 should also work, modifiy the CMakeLists.txt accordingly if you do not have OpenCV 4.  The current implementation does not yet follow the new Manifold paradigm but still relies on the LocalParametrization.
 
+
+
 ---
 
 ## Install
@@ -58,6 +60,8 @@ $ ./build_thirdparty.sh
 ```
 
 If you wish to use your own version of ceres and sophus, you can skip this step.
+
+Note: If using Ubuntu 20.04 or higher, you might have to remove the "FindTBB.cmake" file in the "ceres-solver/cmake/" folder.
 
 Then, you can simply build ezcalib as follows:
 
