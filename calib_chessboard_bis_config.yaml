@@ -3,6 +3,7 @@
 
 input_images_folder: "/data/ifremer/victor_stereo_cam/acquisition_mire/2021-10-18-06-46-04_images/right_images/"
 
+use_mono_focal: 1 # (if 0: fx != fy)
 dist_model: "radtan5" # (rad1, rad2, rad3, radtan4, radtan5, radtan8, kannalabrandt)
 
 prior_fov: 70.0 # Prior FOV of the camera in degrees

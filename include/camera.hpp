@@ -39,10 +39,11 @@ public:
   Camera(const std::string& _config_file_path);
 
   Camera(const std::string& _input_images_path,
+         const bool _use_mono_focal,
          const std::string& _dist_model, 
          const double _prior_fov);
 
-  void setupInitialDistortion(const std::string& _dist_model);
+  void setupInitialDistortion();
   void setupInitialCalibration(const cv::Size& _img_size);
 
   Eigen::Vector2d undistortPx(const cv::Point2f& _corner_pt) const;
@@ -63,6 +64,7 @@ public:
 
   Sophus::SE3d m_T_cam0_2_cam;
 
+  bool m_use_mono_focal = true;
   std::string m_dist_model = "";
   double m_prior_fov_deg = -1.;
 };

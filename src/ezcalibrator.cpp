@@ -112,13 +112,16 @@ EZCalibrator::computeCalibration()
   loss_function = new ceres::LossFunctionWrapper(new ceres::CauchyLoss(1.0), ceres::TAKE_OWNERSHIP);
 
   // Setup Intrinsic & Distortion parameters
-  std::array<double,2> opt_focal_param = {m_pcamera->m_pcalib_params->m_fx, m_pcamera->m_pcalib_params->m_fy};
-  std::array<double,2> opt_pp_param = {m_pcamera->m_pcalib_params->m_cx, m_pcamera->m_pcalib_params->m_cy};
-  std::vector<double>  opt_dist_param = m_pcamera->m_pdist_params->getDistParameters();
+  // std::array<double,2> opt_focal_param = {m_pcamera->m_pcalib_params->m_fx, m_pcamera->m_pcalib_params->m_fy};
+  // std::array<double,2> opt_pp_param = {m_pcamera->m_pcalib_params->m_cx, m_pcamera->m_pcalib_params->m_cy};
+  std::vector<double> opt_focal_param = m_pcamera->m_pcalib_params->getFocal();
+  std::vector<double> opt_pp_param = m_pcamera->m_pcalib_params->getPrincipalPoint();
+  std::vector<double> opt_dist_param = m_pcamera->m_pdist_params->getDistParameters();
   
   // Setup Intrinsic & Distortion parameters
-  problem.AddParameterBlock(opt_focal_param.data(), 2);
-  problem.AddParameterBlock(opt_pp_param.data(), 2);
+  // problem.AddParameterBlock(opt_focal_param.data(), 2);
+  problem.AddParameterBlock(opt_focal_param.data(), opt_focal_param.size());
+  problem.AddParameterBlock(opt_pp_param.data(), opt_pp_param.size());
   problem.AddParameterBlock(opt_dist_param.data(), opt_dist_param.size());
 
   const std::vector<Eigen::Vector3d> &v_tgt_coords = m_pcalib_detector->getTargetCoords();
@@ -145,8 +148,8 @@ EZCalibrator::computeCalibration()
 
       ceres::CostFunction* f = 
           m_pcamera->m_pdist_params->createCeresCostFunction(calib_frame.m_v_corners_px[j].x, 
-                                                            calib_frame.m_v_corners_px[j].y,
-                                                            v_tgt_coords[j]);
+                                                             calib_frame.m_v_corners_px[j].y,
+                                                             v_tgt_coords[j]);
 
       problem.AddResidualBlock(
                   f, loss_function,
@@ -195,8 +198,7 @@ EZCalibrator::computeCalibration()
 
   std::cout << summary.FullReport() << std::endl;
   
-  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param[0], opt_focal_param[1], 
-                                              opt_pp_param[0], opt_pp_param[1]);
+  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
 
   m_pcamera->m_pcalib_params->displayParams();
@@ -210,8 +212,7 @@ EZCalibrator::computeCalibration()
 
   std::cout << summary.FullReport() << std::endl;
 
-  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param[0], opt_focal_param[1], 
-                                              opt_pp_param[0], opt_pp_param[1]);
+  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
 
   m_pcamera->m_pcalib_params->displayParams();
@@ -225,8 +226,7 @@ EZCalibrator::computeCalibration()
 
   std::cout << summary.FullReport() << std::endl;
 
-  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param[0], opt_focal_param[1], 
-                                              opt_pp_param[0], opt_pp_param[1]);
+  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
 
   m_pcamera->m_pcalib_params->displayParams();
@@ -268,9 +268,14 @@ EZCalibrator::computeCalibration()
       }
     }
 
-    rmse_err /= nb_err;
-
-    calib_frame.rmse_err = std::sqrt(rmse_err);
+    if (nb_err > 0)
+    {
+      calib_frame.rmse_err = std::sqrt(rmse_err / static_cast<double>(nb_err));
+    }
+    else
+    {
+      calib_frame.rmse_err = std::numeric_limits<double>::max();
+    }
   }
 
   cv::Scalar vini_err_mean, vini_err_std;
@@ -341,13 +346,15 @@ EZCalibrator::refineCalibration()
   loss_function = new ceres::LossFunctionWrapper(new ceres::CauchyLoss(1.0), ceres::TAKE_OWNERSHIP);
 
   // Setup Intrinsic & Distortion parameters
-  std::array<double,2> opt_focal_param = {m_pcamera->m_pcalib_params->m_fx, m_pcamera->m_pcalib_params->m_fy};
-  std::array<double,2> opt_pp_param = {m_pcamera->m_pcalib_params->m_cx, m_pcamera->m_pcalib_params->m_cy};
-  std::vector<double>  opt_dist_param = m_pcamera->m_pdist_params->getDistParameters();
+  // std::array<double,2> opt_focal_param = {m_pcamera->m_pcalib_params->m_fx, m_pcamera->m_pcalib_params->m_fy};
+  // std::array<double,2> opt_pp_param = {m_pcamera->m_pcalib_params->m_cx, m_pcamera->m_pcalib_params->m_cy};
+  std::vector<double> opt_focal_param = m_pcamera->m_pcalib_params->getFocal();
+  std::vector<double> opt_pp_param = m_pcamera->m_pcalib_params->getPrincipalPoint();
+  std::vector<double> opt_dist_param = m_pcamera->m_pdist_params->getDistParameters();
   
   // Setup Intrinsic & Distortion parameters
-  problem.AddParameterBlock(opt_focal_param.data(), 2);
-  problem.AddParameterBlock(opt_pp_param.data(), 2);
+  problem.AddParameterBlock(opt_focal_param.data(), opt_focal_param.size());
+  problem.AddParameterBlock(opt_pp_param.data(), opt_pp_param.size());
   problem.AddParameterBlock(opt_dist_param.data(), opt_dist_param.size());
 
   const std::vector<Eigen::Vector3d> &v_tgt_coords = m_pcalib_detector->getTargetCoords();
@@ -423,8 +430,7 @@ EZCalibrator::refineCalibration()
 
   std::cout << summary.FullReport() << std::endl;
   
-  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param[0], opt_focal_param[1], 
-                                              opt_pp_param[0], opt_pp_param[1]);
+  m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
 
   std::cout << "\n1. Refined Calibration Parameters";
@@ -441,6 +447,11 @@ EZCalibrator::refineCalibration()
 
   for (auto& calib_frame : m_pcamera->m_v_calib_frames)
   {
+    if (calib_frame.rmse_err > 1.)
+    {
+      continue;
+    }
+
     const std::vector<cv::Point2f>& v_corners_pts = calib_frame.m_v_corners_px;
 
     double rmse_err = 0.;
@@ -469,9 +480,14 @@ EZCalibrator::refineCalibration()
       }
     }
 
-    rmse_err /= nb_err;
-
-    calib_frame.rmse_err = std::sqrt(rmse_err);
+    if (nb_err > 0)
+    {
+      calib_frame.rmse_err = std::sqrt(rmse_err / static_cast<double>(nb_err));
+    }
+    else
+    {
+      calib_frame.rmse_err = std::numeric_limits<double>::max();
+    }
   }
 
   cv::Scalar vini_err_mean, vini_err_std;
@@ -614,8 +630,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
   const size_t nb_cams = _v_cameras.size();
 
-  std::vector<std::array<double,2>> v_focal_param(nb_cams-1);
-  std::vector<std::array<double,2>> v_pp_param(nb_cams-1);
+  std::vector<std::vector<double>> v_focal_param(nb_cams-1);
+  std::vector<std::vector<double>> v_pp_param(nb_cams-1);
   std::vector<std::vector<double>> v_dist_param(nb_cams-1);
 
   const std::vector<Eigen::Vector3d> &v_tgt_coords = m_pcalib_detector->getTargetCoords();
@@ -630,17 +646,19 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   {
     const auto& camj = _v_cameras[i];
 
-    v_focal_param[i-1] = {camj.m_pcalib_params->m_fx, camj.m_pcalib_params->m_fy};
-    v_pp_param[i-1] = {camj.m_pcalib_params->m_cx, camj.m_pcalib_params->m_cy};
+    v_focal_param[i-1] = camj.m_pcalib_params->getFocal();
+    v_pp_param[i-1] = camj.m_pcalib_params->getPrincipalPoint();
     v_dist_param[i-1] = camj.m_pdist_params->getDistParameters();
 
-    problem.AddParameterBlock(v_focal_param.back().data(), 2);
-    problem.AddParameterBlock(v_pp_param.back().data(), 2);
-    problem.AddParameterBlock(v_dist_param.back().data(), v_dist_param.back().size());
+    std::cout << "\n v_dist_param[" << i-1 << "] size = " << v_dist_param[i-1].size() << "\n";
 
-    problem.SetParameterBlockConstant(v_focal_param.back().data());
-    problem.SetParameterBlockConstant(v_pp_param.back().data());
-    problem.SetParameterBlockConstant(v_dist_param.back().data());
+    problem.AddParameterBlock(v_focal_param[i-1].data(), v_focal_param[i-1].size());
+    problem.AddParameterBlock(v_pp_param[i-1].data(), v_pp_param[i-1].size());
+    problem.AddParameterBlock(v_dist_param[i-1].data(), v_dist_param[i-1].size());
+
+    problem.SetParameterBlockConstant(v_focal_param[i-1].data());
+    problem.SetParameterBlockConstant(v_pp_param[i-1].data());
+    problem.SetParameterBlockConstant(v_dist_param[i-1].data());
 
     std::array<std::vector<double>,6ul> tab_Tcic0_v_coefs;
     for (size_t j=0ul; j < 6ul; ++j)
@@ -651,7 +669,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
     for (size_t j=0ul; j < cam0.m_v_calib_frames.size(); ++j)
     {
       const auto& calib_frame0 = cam0.m_v_calib_frames[i];
-      if (calib_frame0.rmse_err > 1.5)
+      if (calib_frame0.rmse_err > 1.)
       {
         continue;
       }
@@ -663,7 +681,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
         {
           const Sophus::SE3d Tcic0 = calib_framej.m_T_world_2_cam * calib_frame0.m_T_world_2_cam.inverse();
           const Sophus::Vector6d T_log = Tcic0.log();
-          for (size_t l=0ul; l < 6; ++l)
+          for (size_t l=0ul; l < 6ul; ++l)
           {
             tab_Tcic0_v_coefs[l].push_back(T_log[l]);
           }
@@ -704,7 +722,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
       cam0_tgt_coords.push_back(calib_frame0.m_T_world_2_cam * tgt_coord);
     }
 
-    if (calib_frame0.rmse_err > 1.5)
+    if (calib_frame0.rmse_err > 1.)
     {
       continue;
     }
@@ -715,7 +733,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
       for (const auto& calib_framej : camj.m_v_calib_frames)
       {
-        if (calib_framej.rmse_err > 1.5)
+        if (calib_framej.rmse_err > 1.)
         {
           continue;
         }
@@ -792,16 +810,23 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   std::cout << "\n1. Optimized Parameters ";
   std::cout << "\n=================================\n";
 
-  for (size_t i=1ul; i < nb_cams; ++i)
+  for (size_t i=0ul; i < nb_cams; ++i)
   {
     std::cout << "\nCam #" << i << ":\n";
 
     _v_cameras[i].m_pcalib_params->displayParams();
     _v_cameras[i].m_pdist_params->displayParams();
 
-    std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
-    std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
+    if (i > 0)
+    {
+      std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
+      std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
+
+      _v_cameras[i].m_T_cam0_2_cam = v_opt_Tcic0[i-1];
+    }
   }
+
+
 }
 
 void 

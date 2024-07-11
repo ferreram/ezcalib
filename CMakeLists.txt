@@ -17,8 +17,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 ## Dependencies ##
 ##################
 
-find_package(Boost REQUIRED COMPONENTS
-            program_options)
+# find_package(Boost REQUIRED COMPONENTS
+#             program_options)
 
 
 find_package(Eigen3 REQUIRED)
@@ -65,7 +65,7 @@ endif()
 ## Build ##
 ###########
 
-add_subdirectory(thirdparty/backward-cpp)
+# add_subdirectory(thirdparty/backward-cpp)
 
 add_subdirectory(ethz_apriltag2)
 
@@ -81,12 +81,9 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-  PUBLIC
-    Backward::Interface
   PRIVATE
     Ceres::ceres
     ${OpenCV_LIBS}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
     stdc++fs
     ethz_apriltag2
     Sophus::Sophus

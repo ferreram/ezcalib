@@ -13,6 +13,7 @@ Camera::Camera(const std::string& _config_file_path)
     exit(-1);
   }
 
+  m_use_mono_focal = int(fsSettings["use_mono_focal"]);
   m_dist_model = fsSettings["dist_model"].string();
   m_prior_fov_deg = fsSettings["prior_fov"].real();
   m_input_images_path = fsSettings["input_images_folder"].string();
@@ -29,15 +30,17 @@ Camera::Camera(const std::string& _config_file_path)
     exit(-1);
   }
 
-  setupInitialDistortion(m_dist_model);
+  setupInitialDistortion();
 
   displayCameraInfo();
 }
 
 Camera::Camera(const std::string& _input_images_path,
+               const bool _use_mono_focal,
                const std::string& _dist_model, 
                const double _prior_fov)
   : m_input_images_path(_input_images_path)
+  , m_use_mono_focal(_use_mono_focal)
   , m_dist_model(_dist_model)
   , m_prior_fov_deg(_prior_fov)
 {
@@ -53,45 +56,45 @@ Camera::Camera(const std::string& _input_images_path,
     exit(-1);
   }
 
-  setupInitialDistortion(m_dist_model);
+  setupInitialDistortion();
 
   displayCameraInfo();
 }
 
 void 
-Camera::setupInitialDistortion(const std::string& _dist_model)
+Camera::setupInitialDistortion()
 {
-  if (_dist_model == "rad1")
+  if (m_dist_model == "rad1")
   {
-    m_pdist_params = std::make_unique<Rad1DistParam>();
+    m_pdist_params = std::make_unique<Rad1DistParam>(m_use_mono_focal);
   }
-  else if (_dist_model == "rad2")
+  else if (m_dist_model == "rad2")
   {
-    m_pdist_params = std::make_unique<Rad2DistParam>();
+    m_pdist_params = std::make_unique<Rad2DistParam>(m_use_mono_focal);
   }
-  else if (_dist_model == "rad3")
+  else if (m_dist_model == "rad3")
   {
-    m_pdist_params = std::make_unique<Rad3DistParam>();
+    m_pdist_params = std::make_unique<Rad3DistParam>(m_use_mono_focal);
   }
-  else if (_dist_model == "radtan4")
+  else if (m_dist_model == "radtan4")
   {
-    m_pdist_params = std::make_unique<RadTan4DistParam>();
+    m_pdist_params = std::make_unique<RadTan4DistParam>(m_use_mono_focal);
   }
-  else if (_dist_model == "radtan5")
+  else if (m_dist_model == "radtan5")
   {
-    m_pdist_params = std::make_unique<RadTan5DistParam>();
+    m_pdist_params = std::make_unique<RadTan5DistParam>(m_use_mono_focal);
   }
-  else if (_dist_model == "radtan8")
+  else if (m_dist_model == "radtan8")
   {
-    m_pdist_params = std::make_unique<RadTan8DistParam>();
+    m_pdist_params = std::make_unique<RadTan8DistParam>(m_use_mono_focal);
   }
-  else if (_dist_model == "kannalabrandt")
+  else if (m_dist_model == "kannalabrandt")
   {
-    m_pdist_params = std::make_unique<KB4DistParam>();
+    m_pdist_params = std::make_unique<KB4DistParam>(m_use_mono_focal);
   }
   else
   {
-    std::cerr << "\nThe provided distortion model: " << _dist_model << " is not implemented!\n";
+    std::cerr << "\nThe provided distortion model: " << m_dist_model << " is not implemented!\n";
     exit(-1);
   }
 }
@@ -113,7 +116,7 @@ Camera::setupInitialCalibration(const cv::Size& _img_size)
   const double inv_tan_half_fov = 1. / std::tan(half_fov_rad);
   const double prior_focal = std::max(prior_cx * inv_tan_half_fov, prior_cy * inv_tan_half_fov);
   
-  m_pcalib_params = std::make_unique<IntrinsicsParam>(img_width, img_height, prior_focal, prior_focal, prior_cx, prior_cy);
+  m_pcalib_params = std::make_unique<IntrinsicsParam>(img_width, img_height, prior_focal, prior_cx, prior_cy, m_use_mono_focal);
 }
 
 

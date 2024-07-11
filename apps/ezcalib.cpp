@@ -26,10 +26,17 @@ setupCameras(const std::string& _config_file_path,
     const size_t nb_cams = node_input_images.size();
 
 
+    const cv::FileNode node_mono_focal = fsSettings["use_mono_focal"];
     const cv::FileNode node_dist_models = fsSettings["dist_model"];
     const cv::FileNode node_prior_fovs = fsSettings["prior_fov"];
 
-    if (node_dist_models.size() != nb_cams)
+    if (node_mono_focal.size() != nb_cams)
+    {
+      std::cerr << "\nError!\n";
+      std::cerr << "\nConfig file must have as many mono focals info as provided input image folders!\n";
+      exit(-1);
+    }
+    else if (node_dist_models.size() != nb_cams)
     {
       std::cerr << "\nError!\n";
       std::cerr << "\nConfig file must have as many dist models as provided input image folders!\n";
@@ -47,6 +54,7 @@ setupCameras(const std::string& _config_file_path,
     for (size_t i=0; i < nb_cams; ++i)
     {
       _v_cameras.emplace_back(node_input_images[i].string(),
+                              int(node_mono_focal[i]),
                               node_dist_models[i].string(),
                               node_prior_fovs[i].real());
     }
@@ -101,11 +109,12 @@ writeCamerasCalib(const std::vector<Camera>& _v_cameras,
   {
     const auto& cam = _v_cameras[i];
 
-    cam_calib_file << "#Camera #" + std::to_string(i) + "\n";
+    cam_calib_file << "\n#Camera #" + std::to_string(i) + "\n";
 
     cam_calib_file << "cam" + std::to_string(i) << ":\n";
 
     cam_calib_file << "  input_images_folder: " << cam.m_input_images_path << "\n";
+    cam_calib_file << "  use_mono_focal: " << static_cast<int>(cam.m_use_mono_focal) << "\n";
     cam_calib_file << "  dist_model: " << cam.m_dist_model << "\n";
     
     cam_calib_file << "  image_size: [" << static_cast<int>(cam.m_pcalib_params->m_img_width)

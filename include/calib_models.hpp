@@ -21,13 +21,30 @@ public:
                   const double _cx, const double _cy)
     : m_img_width(_img_width), m_img_height(_img_height)
     , m_fx(_fx), m_fy(_fy), m_cx(_cx), m_cy(_cy)
+    , m_use_mono_focal(false)
+  {
+    setCalibMatrix();
+  }
+
+  IntrinsicsParam(const double _img_width,
+                  const double _img_height,
+                  const double _f,
+                  const double _cx, const double _cy,
+                  const bool _use_mono_focal = true)
+    : m_img_width(_img_width), m_img_height(_img_height)
+    , m_fx(_f), m_fy(_f), m_cx(_cx), m_cy(_cy)
+    , m_use_mono_focal(_use_mono_focal)
   {
     setCalibMatrix();
   }
 
   void displayParams() const
   {
-    std::cout << "\n Focal fx / fy : " << m_fx << " / " << m_fy;
+    if (m_use_mono_focal)
+      std::cout << "\n Focal : " << m_fx;
+    else
+      std::cout << "\n Focal fx / fy : " << m_fx << " / " << m_fy;
+      
     std::cout << "\n PrincipalPoint cx / cy : " << m_cx << " / " << m_cy << "\n\n";
   }
 
@@ -79,6 +96,24 @@ public:
     return (_u > -0.5f && _v > -0.5f && _u < img_cols_border && _v < img_rows_border);
   }
 
+  void resetParameters(const std::vector<double> _vfocal,
+                       const std::vector<double> _vprincipal_point)
+  {
+    if (m_use_mono_focal)
+    {
+      m_fx = _vfocal.at(0); m_fy = _vfocal.at(0);
+    }
+    else
+    {
+      m_fx = _vfocal.at(0); m_fy = _vfocal.at(1);
+    }
+    
+    m_cx = _vprincipal_point.at(0); 
+    m_cy = _vprincipal_point.at(1);
+    
+    setCalibMatrix();
+  }
+
   void resetParameters(const double _fx, const double _fy,
                        const double _cx, const double _cy)
   {
@@ -86,6 +121,27 @@ public:
     m_cx = _cx; m_cy = _cy;
     
     setCalibMatrix();
+  }
+
+  void resetParameters(const double _f, const double _cx, const double _cy)
+  {
+    m_fx = _f; m_fy = _f;
+    m_cx = _cx; m_cy = _cy;
+    
+    setCalibMatrix();
+  }
+
+  std::vector<double> getFocal()
+  {
+    if (m_use_mono_focal) 
+      return {m_fx};
+
+    return {m_fx, m_fy};
+  }
+
+  std::vector<double> getPrincipalPoint()
+  {
+    return {m_cx, m_cy};
   }
 
   std::vector<double> getParameters()
@@ -97,6 +153,8 @@ public:
 
   double m_fx, m_fy;
   double m_cx, m_cy;
+
+  bool m_use_mono_focal;
 
 private:
   void setCalibMatrix()

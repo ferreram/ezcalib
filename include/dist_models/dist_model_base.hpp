@@ -83,9 +83,10 @@ public:
   }
 
 protected:
-  DistParam(const int _nb_params)
-    : m_nb_params(_nb_params)
+  DistParam(const int _nb_params, const bool _use_mono_focal)
+    : m_nb_params(_nb_params), m_use_mono_focal(_use_mono_focal)
   {}
 
   int m_nb_params = -1;
+  bool m_use_mono_focal;
 };
