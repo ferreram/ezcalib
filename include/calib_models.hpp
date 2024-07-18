@@ -41,11 +41,27 @@ public:
   void displayParams() const
   {
     if (m_use_mono_focal)
-      std::cout << "\n Focal : " << m_fx;
+      std::cout << "\n Focal: " << m_fx;
     else
-      std::cout << "\n Focal fx / fy : " << m_fx << " / " << m_fy;
+      std::cout << "\n Focal: " << m_fx << " / " << m_fy;
       
-    std::cout << "\n PrincipalPoint cx / cy : " << m_cx << " / " << m_cy << "\n\n";
+    std::cout << "\n PrincipalPoint: " << m_cx << " / " << m_cy << "\n\n";
+  }
+
+  void displayParamsWithStd() const
+  {
+    if (m_vfocal_std.empty())
+    {
+      displayParams();
+      return;
+    }
+
+    if (m_use_mono_focal)
+      std::cout << "\n Focal: " << m_fx << " +/- " << m_vfocal_std[0];
+    else
+      std::cout << "\n Focal: " << m_fx << " / " << m_fy << " +/- " << m_vfocal_std[0] << " / " << m_vfocal_std[1];
+      
+    std::cout << "\n PrincipalPoint: " << m_cx << " / " << m_cy << " +/- " << m_vpp_std[0] << " / " << m_vpp_std[1] << "\n\n";
   }
 
   Eigen::Vector3d projImageToCam(const Eigen::Vector2d& _px) const
@@ -131,7 +147,7 @@ public:
     setCalibMatrix();
   }
 
-  std::vector<double> getFocal()
+  std::vector<double> getFocal() const
   {
     if (m_use_mono_focal) 
       return {m_fx};
@@ -139,14 +155,43 @@ public:
     return {m_fx, m_fy};
   }
 
-  std::vector<double> getPrincipalPoint()
+  std::vector<double> getPrincipalPoint() const
   {
     return {m_cx, m_cy};
   }
 
-  std::vector<double> getParameters()
+  double getMeanFocal() const
+  {
+    if (m_use_mono_focal)
+      return m_fx;
+    
+    return (m_fx + m_fy) * 0.5;
+  }
+
+  std::vector<double> getParameters() const
   {
     return {m_fx, m_fy, m_cx, m_cy};
+  }
+
+  std::vector<double> getParametersStd() const
+  {
+    if (m_use_mono_focal)
+      return {m_vfocal_std[0], m_vfocal_std[0], m_vpp_std[0], m_vpp_std[1]};
+
+    return {m_vfocal_std[0], m_vfocal_std[1], m_vpp_std[0], m_vpp_std[1]};
+  }
+
+  void setFocalStd(const std::vector<double>& _cov_focal)
+  {
+    m_vfocal_std.push_back(std::sqrt(_cov_focal[0]));
+    if (!m_use_mono_focal)
+      m_vfocal_std.push_back(std::sqrt(_cov_focal[3]));
+  }
+
+  void setPPStd(const std::vector<double>& _cov_pp)
+  {
+    m_vpp_std.push_back(std::sqrt(_cov_pp[0]));
+    m_vpp_std.push_back(std::sqrt(_cov_pp[3]));
   }
 
   double m_img_width, m_img_height;
@@ -155,6 +200,9 @@ public:
   double m_cx, m_cy;
 
   bool m_use_mono_focal;
+
+  std::vector<double> m_vfocal_std;
+  std::vector<double> m_vpp_std;
 
 private:
   void setCalibMatrix()

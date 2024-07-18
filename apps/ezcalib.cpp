@@ -130,6 +130,16 @@ writeCamerasCalib(const std::vector<Camera>& _v_cameras,
         cam_calib_file << vcalib_params[j] << "]\n";
     }
 
+    const auto vcalib_params_std = cam.m_pcalib_params->getParametersStd();
+    cam_calib_file << "                         # +/- [";
+    for (size_t j=0; j < vcalib_params_std.size(); ++j)
+    {
+      if (j < vcalib_params_std.size()-1)
+        cam_calib_file << vcalib_params_std[j] << ", ";
+      else
+        cam_calib_file << vcalib_params_std[j] << "]\n";
+    }
+
     const auto vdist_coefs = cam.m_pdist_params->getDistParameters();
     cam_calib_file << "  distortion_coefs: ["; 
     for (size_t j=0; j < vdist_coefs.size(); ++j)
@@ -139,6 +149,17 @@ writeCamerasCalib(const std::vector<Camera>& _v_cameras,
       else
         cam_calib_file << vdist_coefs[j] << "]\n";
     }
+
+    const auto vdist_coefs_std = cam.m_pdist_params->getDistParamsStd();
+    cam_calib_file << "                         # +/- [";
+    for (size_t j=0; j < vdist_coefs_std.size(); ++j)
+    {
+      if (j < vdist_coefs_std.size()-1)
+        cam_calib_file << vdist_coefs_std[j] << ", ";
+      else
+        cam_calib_file << vdist_coefs_std[j] << "]\n";
+    }
+
 
     if (i > 0)
     {

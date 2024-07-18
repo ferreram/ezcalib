@@ -13,6 +13,7 @@ public:
   {}
 
   virtual void displayParams() const = 0;
+  virtual void displayParamsWithStd() const = 0;
 
   virtual Eigen::Vector2d distortCamPoint(const double _x, const double _y) const = 0;
   virtual Eigen::Vector2d distortCamPoint(const Eigen::Vector2d& _cam_pt) const = 0;
@@ -82,6 +83,18 @@ public:
     return m_nb_params;
   }
 
+  std::vector<double> getDistParamsStd() const {
+    return m_vdist_params_std;
+  }
+
+  void setDistParamsStd(const std::vector<double>& _cov_dist)
+  {
+    for (int i=0; i < m_nb_params; ++i)
+    {
+      m_vdist_params_std.push_back(std::sqrt(_cov_dist[m_nb_params*i+i]));
+    }
+  }
+
 protected:
   DistParam(const int _nb_params, const bool _use_mono_focal)
     : m_nb_params(_nb_params), m_use_mono_focal(_use_mono_focal)
@@ -89,4 +102,6 @@ protected:
 
   int m_nb_params = -1;
   bool m_use_mono_focal;
+
+  std::vector<double> m_vdist_params_std;
 };

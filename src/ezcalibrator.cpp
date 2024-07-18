@@ -184,8 +184,8 @@ EZCalibrator::computeCalibration()
   std::cout << "\n0. Initial Parameters to Optimize";
   std::cout << "\n=================================\n";
   
-  m_pcamera->m_pcalib_params->displayParams();
-  m_pcamera->m_pdist_params->displayParams();
+  m_pcamera->m_pcalib_params->displayParamsWithStd();
+  m_pcamera->m_pdist_params->displayParamsWithStd();
 
   std::cout << "\n\n1. Optimize Focal & Camera Poses";
   std::cout << "\n=================================\n";
@@ -201,8 +201,8 @@ EZCalibrator::computeCalibration()
   m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
 
-  m_pcamera->m_pcalib_params->displayParams();
-  m_pcamera->m_pdist_params->displayParams();
+  m_pcamera->m_pcalib_params->displayParamsWithStd();
+  m_pcamera->m_pdist_params->displayParamsWithStd();
 
   std::cout << "\n\n2. Optimize Focal & Distortion & Camera Poses";
   std::cout << "\n==============================================\n";
@@ -215,8 +215,8 @@ EZCalibrator::computeCalibration()
   m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
 
-  m_pcamera->m_pcalib_params->displayParams();
-  m_pcamera->m_pdist_params->displayParams();
+  m_pcamera->m_pcalib_params->displayParamsWithStd();
+  m_pcamera->m_pdist_params->displayParamsWithStd();
   
   std::cout << "\n\n3. Optimize Focal & Principal Point & Distortion & Camera Poses";
   std::cout << "\n================================================================\n";
@@ -228,9 +228,6 @@ EZCalibrator::computeCalibration()
 
   m_pcamera->m_pcalib_params->resetParameters(opt_focal_param, opt_pp_param);
   m_pcamera->m_pdist_params->resetParameters(opt_dist_param);
-
-  m_pcamera->m_pcalib_params->displayParams();
-  m_pcamera->m_pdist_params->displayParams();
 
   std::vector<double> vopt_err;
   vopt_err.reserve(vini_err.size());
@@ -308,27 +305,35 @@ EZCalibrator::computeCalibration()
 
   if (cov_success)
   {
-    double cov_focal[2*2];
-    double cov_pp[2*2];
-    double cov_dist[opt_dist_param.size()*opt_dist_param.size()];
+    std::vector<double> vcov_focal(opt_focal_param.size()*opt_focal_param.size());
+    std::vector<double> vcov_pp(opt_pp_param.size()*opt_pp_param.size());
+    std::vector<double> vcov_dist(opt_dist_param.size()*opt_dist_param.size());
 
-    ceres_covariance.GetCovarianceBlock(opt_focal_param.data(),opt_focal_param.data(),cov_focal);
-    ceres_covariance.GetCovarianceBlock(opt_pp_param.data(),opt_pp_param.data(),cov_pp);
-    ceres_covariance.GetCovarianceBlock(opt_dist_param.data(),opt_dist_param.data(),cov_dist);
+    ceres_covariance.GetCovarianceBlock(opt_focal_param.data(),opt_focal_param.data(),vcov_focal.data());
+    ceres_covariance.GetCovarianceBlock(opt_pp_param.data(),opt_pp_param.data(),vcov_pp.data());
+    ceres_covariance.GetCovarianceBlock(opt_dist_param.data(),opt_dist_param.data(),vcov_dist.data());
 
-    const Eigen::Map<Eigen::Matrix2d> cov_focal_mat(cov_focal);
-    const Eigen::Map<Eigen::Matrix2d> cov_pp_mat(cov_pp);
-    const Eigen::Map<Eigen::MatrixXd> cov_dist_mat(cov_dist,opt_dist_param.size(),opt_dist_param.size());
+    m_pcamera->m_pcalib_params->setFocalStd(vcov_focal);
+    m_pcamera->m_pcalib_params->setPPStd(vcov_pp);
+    m_pcamera->m_pdist_params->setDistParamsStd(vcov_dist);
+
+    const Eigen::Map<Eigen::MatrixXd> cov_focal_mat(vcov_focal.data(),opt_focal_param.size(),opt_focal_param.size());
+    const Eigen::Map<Eigen::Matrix2d> cov_pp_mat(vcov_pp.data());
+    const Eigen::Map<Eigen::MatrixXd> cov_dist_mat(vcov_dist.data(),opt_dist_param.size(),opt_dist_param.size());
 
     std::cout << "\n\nCovariance on focal : \n" << cov_focal_mat;
     std::cout << "\n\nCovariance on PP : \n" << cov_pp_mat;
     std::cout << "\n\nCovariance on dist : \n" << cov_dist_mat;
+    std::cout << "\n\n";
   }
   else
   {
     std::cout << "\nCovariance Estimation Failed!\n";
     std::cout << "The Jacobian is most likely rank deficient!\n\n";
   }
+
+  m_pcamera->m_pcalib_params->displayParamsWithStd();
+  m_pcamera->m_pdist_params->displayParamsWithStd();
 
   std::cout << "\n\nDone!\n\n";
   
@@ -423,8 +428,8 @@ EZCalibrator::refineCalibration()
   std::cout << "\n0. Initial Parameters to Refine";
   std::cout << "\n=================================\n";
   
-  m_pcamera->m_pcalib_params->displayParams();
-  m_pcamera->m_pdist_params->displayParams();
+  m_pcamera->m_pcalib_params->displayParamsWithStd();
+  m_pcamera->m_pdist_params->displayParamsWithStd();
 
   ceres::Solve(options, &problem, &summary);
 
@@ -435,9 +440,6 @@ EZCalibrator::refineCalibration()
 
   std::cout << "\n1. Refined Calibration Parameters";
   std::cout << "\n=================================\n";
-
-  m_pcamera->m_pcalib_params->displayParams();
-  m_pcamera->m_pdist_params->displayParams();
 
   std::vector<double> vopt_err;
   vopt_err.reserve(vini_err.size());
@@ -520,27 +522,35 @@ EZCalibrator::refineCalibration()
 
   if (cov_success)
   {
-    double cov_focal[2*2];
-    double cov_pp[2*2];
-    double cov_dist[opt_dist_param.size()*opt_dist_param.size()];
+    std::vector<double> vcov_focal(opt_focal_param.size()*opt_focal_param.size());
+    std::vector<double> vcov_pp(opt_pp_param.size()*opt_pp_param.size());
+    std::vector<double> vcov_dist(opt_dist_param.size()*opt_dist_param.size());
 
-    ceres_covariance.GetCovarianceBlock(opt_focal_param.data(),opt_focal_param.data(),cov_focal);
-    ceres_covariance.GetCovarianceBlock(opt_pp_param.data(),opt_pp_param.data(),cov_pp);
-    ceres_covariance.GetCovarianceBlock(opt_dist_param.data(),opt_dist_param.data(),cov_dist);
+    ceres_covariance.GetCovarianceBlock(opt_focal_param.data(),opt_focal_param.data(),vcov_focal.data());
+    ceres_covariance.GetCovarianceBlock(opt_pp_param.data(),opt_pp_param.data(),vcov_pp.data());
+    ceres_covariance.GetCovarianceBlock(opt_dist_param.data(),opt_dist_param.data(),vcov_dist.data());
 
-    const Eigen::Map<Eigen::Matrix2d> cov_focal_mat(cov_focal);
-    const Eigen::Map<Eigen::Matrix2d> cov_pp_mat(cov_pp);
-    const Eigen::Map<Eigen::MatrixXd> cov_dist_mat(cov_dist,opt_dist_param.size(),opt_dist_param.size());
+    m_pcamera->m_pcalib_params->setFocalStd(vcov_focal);
+    m_pcamera->m_pcalib_params->setPPStd(vcov_pp);
+    m_pcamera->m_pdist_params->setDistParamsStd(vcov_dist);
+
+    const Eigen::Map<Eigen::MatrixXd> cov_focal_mat(vcov_focal.data(),opt_focal_param.size(),opt_focal_param.size());
+    const Eigen::Map<Eigen::Matrix2d> cov_pp_mat(vcov_pp.data());
+    const Eigen::Map<Eigen::MatrixXd> cov_dist_mat(vcov_dist.data(),opt_dist_param.size(),opt_dist_param.size());
 
     std::cout << "\n\nCovariance on focal : \n" << cov_focal_mat;
     std::cout << "\n\nCovariance on PP : \n" << cov_pp_mat;
     std::cout << "\n\nCovariance on dist : \n" << cov_dist_mat;
+    std::cout << "\n\n";
   }
   else
   {
     std::cout << "\nCovariance Estimation Failed!\n";
     std::cout << "The Jacobian is most likely rank deficient!\n\n";
   }
+
+  m_pcamera->m_pcalib_params->displayParamsWithStd();
+  m_pcamera->m_pdist_params->displayParamsWithStd();
 
   std::cout << "\n\nDone!\n\n";
 
@@ -587,7 +597,7 @@ EZCalibrator::computeP3PRansac(
                           cv::Mat::eye(3,3,CV_32F), 
                           cv::Mat(), 
                           rvec, tvec, false, 
-                          1000, 4.0 / _calib_params.m_fx, 0.999, 
+                          1000, 4.0 / _calib_params.getMeanFocal(), 0.999, 
                           _v_inliers,
                           #if CV_VERSION_MAJOR < 4 
                             cv::SOLVEPNP_P3P 
@@ -649,8 +659,6 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
     v_focal_param[i-1] = camj.m_pcalib_params->getFocal();
     v_pp_param[i-1] = camj.m_pcalib_params->getPrincipalPoint();
     v_dist_param[i-1] = camj.m_pdist_params->getDistParameters();
-
-    std::cout << "\n v_dist_param[" << i-1 << "] size = " << v_dist_param[i-1].size() << "\n";
 
     problem.AddParameterBlock(v_focal_param[i-1].data(), v_focal_param[i-1].size());
     problem.AddParameterBlock(v_pp_param[i-1].data(), v_pp_param[i-1].size());
@@ -793,8 +801,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   {
     std::cout << "\nCam #" << i << ":\n";
 
-    _v_cameras[i].m_pcalib_params->displayParams();
-    _v_cameras[i].m_pdist_params->displayParams();
+    _v_cameras[i].m_pcalib_params->displayParamsWithStd();
+    _v_cameras[i].m_pdist_params->displayParamsWithStd();
 
     std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
     std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
@@ -814,8 +822,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   {
     std::cout << "\nCam #" << i << ":\n";
 
-    _v_cameras[i].m_pcalib_params->displayParams();
-    _v_cameras[i].m_pdist_params->displayParams();
+    _v_cameras[i].m_pcalib_params->displayParamsWithStd();
+    _v_cameras[i].m_pdist_params->displayParamsWithStd();
 
     if (i > 0)
     {
@@ -825,8 +833,6 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
       _v_cameras[i].m_T_cam0_2_cam = v_opt_Tcic0[i-1];
     }
   }
-
-
 }
 
 void 

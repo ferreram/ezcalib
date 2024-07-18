@@ -146,7 +146,7 @@ Camera::displayIntrinsicParameters() const
   if (m_pcalib_params != nullptr)
   {
     std::cout << "\nIntrinsic Parameters:\n";
-    m_pcalib_params->displayParams();
+    m_pcalib_params->displayParamsWithStd();
   }
   else
   {
@@ -161,7 +161,7 @@ Camera::displayDistortionParameters() const
   if (m_pdist_params != nullptr)
   {
     std::cout << "\nDistortion Parameters:\n";
-    m_pdist_params->displayParams();
+    m_pdist_params->displayParamsWithStd();
   }
   else
   {
