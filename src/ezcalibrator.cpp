@@ -112,14 +112,11 @@ EZCalibrator::computeCalibration()
   loss_function = new ceres::LossFunctionWrapper(new ceres::CauchyLoss(1.0), ceres::TAKE_OWNERSHIP);
 
   // Setup Intrinsic & Distortion parameters
-  // std::array<double,2> opt_focal_param = {m_pcamera->m_pcalib_params->m_fx, m_pcamera->m_pcalib_params->m_fy};
-  // std::array<double,2> opt_pp_param = {m_pcamera->m_pcalib_params->m_cx, m_pcamera->m_pcalib_params->m_cy};
   std::vector<double> opt_focal_param = m_pcamera->m_pcalib_params->getFocal();
   std::vector<double> opt_pp_param = m_pcamera->m_pcalib_params->getPrincipalPoint();
   std::vector<double> opt_dist_param = m_pcamera->m_pdist_params->getDistParameters();
   
   // Setup Intrinsic & Distortion parameters
-  // problem.AddParameterBlock(opt_focal_param.data(), 2);
   problem.AddParameterBlock(opt_focal_param.data(), opt_focal_param.size());
   problem.AddParameterBlock(opt_pp_param.data(), opt_pp_param.size());
   problem.AddParameterBlock(opt_dist_param.data(), opt_dist_param.size());
@@ -321,10 +318,10 @@ EZCalibrator::computeCalibration()
     const Eigen::Map<Eigen::Matrix2d> cov_pp_mat(vcov_pp.data());
     const Eigen::Map<Eigen::MatrixXd> cov_dist_mat(vcov_dist.data(),opt_dist_param.size(),opt_dist_param.size());
 
-    std::cout << "\n\nCovariance on focal : \n" << cov_focal_mat;
-    std::cout << "\n\nCovariance on PP : \n" << cov_pp_mat;
-    std::cout << "\n\nCovariance on dist : \n" << cov_dist_mat;
-    std::cout << "\n\n";
+    // std::cout << "\n\nCovariance on focal : \n" << cov_focal_mat;
+    // std::cout << "\n\nCovariance on PP : \n" << cov_pp_mat;
+    // std::cout << "\n\nCovariance on dist : \n" << cov_dist_mat;
+    // std::cout << "\n\n";
   }
   else
   {
@@ -538,10 +535,10 @@ EZCalibrator::refineCalibration()
     const Eigen::Map<Eigen::Matrix2d> cov_pp_mat(vcov_pp.data());
     const Eigen::Map<Eigen::MatrixXd> cov_dist_mat(vcov_dist.data(),opt_dist_param.size(),opt_dist_param.size());
 
-    std::cout << "\n\nCovariance on focal : \n" << cov_focal_mat;
-    std::cout << "\n\nCovariance on PP : \n" << cov_pp_mat;
-    std::cout << "\n\nCovariance on dist : \n" << cov_dist_mat;
-    std::cout << "\n\n";
+    // std::cout << "\n\nCovariance on focal : \n" << cov_focal_mat;
+    // std::cout << "\n\nCovariance on PP : \n" << cov_pp_mat;
+    // std::cout << "\n\nCovariance on dist : \n" << cov_dist_mat;
+    // std::cout << "\n\n";
   }
   else
   {
