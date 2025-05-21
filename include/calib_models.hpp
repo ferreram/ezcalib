@@ -43,9 +43,9 @@ public:
   void displayParams() const
   {
     if (m_use_mono_focal)
-      std::cout << "\n Focal: " << m_fx;
+      std::cout << "\n Focal: " << m_fx << " (" << getHFOV() << " degrees)";
     else
-      std::cout << "\n Focal: " << m_fx << " / " << m_fy;
+      std::cout << "\n Focal: " << m_fx << " / " << m_fy << " (" << getHFOV() << " degrees / " << getVFOV() << " degrees)";;
       
     std::cout << "\n PrincipalPoint: " << m_cx << " / " << m_cy << "\n\n";
   }
@@ -59,9 +59,9 @@ public:
     }
 
     if (m_use_mono_focal)
-      std::cout << "\n Focal: " << m_fx << " +/- " << m_fx_std;
+      std::cout << "\n Focal: " << m_fx << " +/- " << m_fx_std << " (" << getHFOV() << " +/- " << getHFOVstd() << " degrees)";
     else
-      std::cout << "\n Focal: " << m_fx << " / " << m_fy << " +/- " << m_fx_std << " / " << m_fy_std;
+      std::cout << "\n Focal: " << m_fx << " / " << m_fy << " +/- " << m_fx_std << " / " << m_fy_std << " (" << getHFOV() << " +/- " << getHFOVstd() << " degrees / " << getVFOV() << " +/- " << getVFOVstd() << " degrees)";;
       
     std::cout << "\n PrincipalPoint: " << m_cx << " / " << m_cy << " +/- " << m_cx_std << " / " << m_cy_std << "\n\n";
   }
@@ -228,6 +228,8 @@ public:
   bool m_use_mono_focal;
 
 private:
+  const double kRAD2DEG = 180. / M_PI;
+
   void setCalibMatrix()
   {
     m_K << m_fx, 0., m_cx, 
@@ -236,6 +238,27 @@ private:
 
     m_invK = m_K.inverse();
   }
+
+  double getHFOV() const
+  {
+    return 2. * std::atan2(m_img_width / 2., m_fx) * kRAD2DEG;
+  }
+
+  double getVFOV() const
+  {
+    return 2. * std::atan2(m_img_height / 2., m_fy) * kRAD2DEG;
+  }
+
+  double getHFOVstd() const
+  {
+    return getHFOV() - 2. * std::atan2(m_img_width / 2., m_fx + m_fx_std) * kRAD2DEG;
+  }
+
+  double getVFOVstd() const
+  {
+    return getVFOV() - 2. * std::atan2(m_img_height / 2., m_fy + m_fy_std) * kRAD2DEG;
+  }
   
+
   Eigen::Matrix3d m_K, m_invK;
 };

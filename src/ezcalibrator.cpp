@@ -648,6 +648,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
 
   const auto& cam0 = _v_cameras[0];
 
+  std::size_t nb_good_pairs = 0;
+
   // Setup Intrinsic & Distortion parameters
   for (size_t i = 1ul; i < nb_cams; ++i)
   {
@@ -684,6 +686,7 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
         const auto& calib_framej = camj.m_v_calib_frames[k];
         if (calib_frame0.m_img_name == calib_framej.m_img_name)
         {
+          ++nb_good_pairs;
           const Sophus::SE3d Tcic0 = calib_framej.m_T_world_2_cam * calib_frame0.m_T_world_2_cam.inverse();
           const Sophus::Vector6d T_log = Tcic0.log();
           for (size_t l=0ul; l < 6ul; ++l)
@@ -715,6 +718,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
     ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
     problem.AddParameterBlock(v_opt_Tcic0.back().data(), 7, local_param);
   }
+
+  std::cout << "\nMulti-Camera Calib -- Nb good pairs : " << nb_good_pairs << "\n";
 
   for (size_t i = 0ul; i < cam0.m_v_calib_frames.size(); ++i)
   {
@@ -794,15 +799,18 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
   std::cout << "\n0. Initial Parameters";
   std::cout << "\n=================================\n";
   
-  for (size_t i=1ul; i < nb_cams; ++i)
+  for (size_t i=0; i < nb_cams; ++i)
   {
     std::cout << "\nCam #" << i << ":\n";
 
     _v_cameras[i].m_pcalib_params->displayParamsWithStd();
     _v_cameras[i].m_pdist_params->displayParamsWithStd();
 
-    std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
-    std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
+    if (i > 0)
+    {
+      std::cout << "\nCam0 to Cam" << i << " 3x4 transformation:\n";
+      std::cout << v_opt_Tcic0[i-1].matrix3x4() << "\n\n";
+    }
   }
 
   std::cout << "\n" << v_opt_Tcic0[0].translation().transpose() << "\n";
