@@ -29,7 +29,8 @@ public:
       displayParams();
       return;
     }
-    std::cout << "\n Distortion k1 / k2 / k3 : " << m_k1 << " / " << m_k2 << " / " << m_k3 << " +/- " << m_vdist_params_std[0] << " / " << m_vdist_params_std[1] << " / " << m_vdist_params_std[2] << "\n\n";
+    std::cout << "\n Distortion k1 / k2 / k3 : " << m_k1 << " / " << m_k2 << " / " << m_k3;
+    std::cout << " +/- " << m_vdist_params_std[0] << " / " << m_vdist_params_std[1] << " / " << m_vdist_params_std[2] << "\n\n";
   }
 
   Eigen::Vector2d distortCamPoint(const double _x, const double _y) const override
