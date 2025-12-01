@@ -25,7 +25,7 @@ Multi-camera calibration (stereo and N-cameras):
 ## Usage
 
 ``` bash
-$ ./ezcalib config_file_path.yaml  (optionnal: out_calib_file_path)
+$ ./path/to/ezcalib/build/ezcalib config_file_path.yaml  (optionnal: out_calib_file_path)
 ```
 
 We provide different config files as examples:
