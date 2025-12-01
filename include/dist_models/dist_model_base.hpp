@@ -98,6 +98,7 @@ public:
 protected:
   DistParam(const int _nb_params, const bool _use_mono_focal)
     : m_nb_params(_nb_params), m_use_mono_focal(_use_mono_focal)
+    , m_vdist_params_std(m_nb_params, 0.)
   {}
 
   int m_nb_params = -1;
