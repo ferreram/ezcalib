@@ -7,8 +7,6 @@ echo ""
 # This script builds third-party libraries for Ubuntu 20.04 / 22.04.
 dir_path=$(pwd)
 
-mkdir thirdparty
-
 sudo apt update
 sudo apt install -y build-essential cmake git
 
@@ -58,6 +56,7 @@ echo ""
 
 cd thirdparty
 git clone https://github.com/strasdat/Sophus
+cd Sophus
 mkdir build
 mkdir install
 cd build/
