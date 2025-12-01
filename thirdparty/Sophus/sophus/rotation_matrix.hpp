@@ -1,10 +1,9 @@
 /// @file
 /// Rotation matrix helper functions.
 
-#ifndef SOPHUS_ROTATION_MATRIX_HPP
-#define SOPHUS_ROTATION_MATRIX_HPP
+#pragma once
 
-#include <Eigen/Dense>
+#include <Eigen/Core>
 #include <Eigen/SVD>
 
 #include "types.hpp"
@@ -56,7 +55,7 @@ SOPHUS_FUNC bool isScaledOrthogonalAndPositive(Eigen::MatrixBase<D> const& sR) {
 /// Takes in arbitrary square matrix (2x2 or larger) and returns closest
 /// orthogonal matrix with positive determinant.
 template <class D>
-SOPHUS_FUNC enable_if_t<
+SOPHUS_FUNC std::enable_if_t<
     std::is_floating_point<typename D::Scalar>::value,
     Matrix<typename D::Scalar, D::RowsAtCompileTime, D::RowsAtCompileTime>>
 makeRotationMatrix(Eigen::MatrixBase<D> const& R) {
@@ -80,5 +79,3 @@ makeRotationMatrix(Eigen::MatrixBase<D> const& R) {
 }
 
 }  // namespace Sophus
-
-#endif  // SOPHUS_ROTATION_MATRIX_HPP

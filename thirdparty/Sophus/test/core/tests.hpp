@@ -9,6 +9,7 @@
 #include <sophus/average.hpp>
 #include <sophus/interpolate.hpp>
 #include <sophus/num_diff.hpp>
+#include <sophus/spline.hpp>
 #include <sophus/test_macros.hpp>
 
 #ifdef SOPHUS_CERES
@@ -16,6 +17,23 @@
 #endif
 
 namespace Sophus {
+
+// compatibility with ceres::Jet types
+#if SOPHUS_CERES
+using ceres::isfinite;
+#else
+using std::isfinite;
+#endif
+
+template <typename Scalar>
+Hyperplane<Scalar, 2> through(const Vector<Scalar, 2>* points) {
+  return Hyperplane<Scalar, 2>::Through(points[0], points[1]);
+}
+
+template <typename Scalar>
+Hyperplane<Scalar, 3> through(const Vector<Scalar, 3>* points) {
+  return Hyperplane<Scalar, 3>::Through(points[0], points[1], points[2]);
+}
 
 template <class LieGroup_>
 class LieGroupTests {
@@ -28,7 +46,9 @@ class LieGroupTests {
   using HomogeneousPoint = typename LieGroup::HomogeneousPoint;
   using ConstPointMap = Eigen::Map<const Point>;
   using Line = typename LieGroup::Line;
+  using Hyperplane = typename LieGroup::Hyperplane;
   using Adjoint = typename LieGroup::Adjoint;
+  static int constexpr Dim = LieGroup::Dim;
   static int constexpr N = LieGroup::N;
   static int constexpr DoF = LieGroup::DoF;
   static int constexpr num_parameters = LieGroup::num_parameters;
@@ -57,8 +77,68 @@ class LieGroupTests {
         Tangent ad2 = LieGroup::vee(T * LieGroup::hat(x) *
                                     group_vec_[i].inverse().matrix());
         SOPHUS_TEST_APPROX(passed, ad1, ad2, Scalar(10) * kSmallEps,
-                           "Adjoint case %, %", i, j);
+                           "Adjoint case {}, {}", i, j);
       }
+    }
+    return passed;
+  }
+
+  // For the time being, leftJacobian and leftJacobianInverse are only
+  // implemented for SO3 and SE3
+  template <class G = LieGroup>
+  std::enable_if_t<std::is_same<G, SO3<Scalar>>::value ||
+                       std::is_same<G, SE3<Scalar>>::value,
+                   bool>
+  leftJacobianTest() {
+    bool passed = true;
+    for (const auto& x : tangent_vec_) {
+      LieGroup const inv_exp_x = LieGroup::exp(x).inverse();
+
+      // Explicit implement the derivative in the Lie Group in first principles
+      // as a vector field: D_x f(x) = D_h log(f(x + h) . f(x)^{-1})
+      Matrix<Scalar, DoF, DoF> const J_num =
+          vectorFieldNumDiff<Scalar, DoF, DoF>(
+              [&inv_exp_x](Tangent const& x_plus_delta) {
+                return (LieGroup::exp(x_plus_delta) * inv_exp_x).log();
+              },
+              x);
+
+      // Analytical left Jacobian
+      Matrix<Scalar, DoF, DoF> const J = LieGroup::leftJacobian(x);
+      SOPHUS_TEST_APPROX(passed, J, J_num, Scalar(100) * kSmallEpsSqrt,
+                         "Left Jacobian");
+
+      Matrix<Scalar, DoF, DoF> J_inv = LieGroup::leftJacobianInverse(x);
+
+      SOPHUS_TEST_APPROX(passed, J, J_inv.inverse().eval(),
+                         Scalar(100) * kSmallEpsSqrt,
+                         "Left Jacobian and its analytical Inverse");
+    }
+
+    return passed;
+  }
+
+  template <class G = LieGroup>
+  std::enable_if_t<!(std::is_same<G, SO3<Scalar>>::value ||
+                     std::is_same<G, SE3<Scalar>>::value),
+                   bool>
+  leftJacobianTest() {
+    return true;
+  }
+
+  bool moreJacobiansTest() {
+    bool passed = true;
+    for (auto const& point : point_vec_) {
+      Matrix<Scalar, Dim, DoF> J = LieGroup::Dx_exp_x_times_point_at_0(point);
+      Tangent t;
+      setToZero(t);
+      Matrix<Scalar, Dim, DoF> const J_num =
+          vectorFieldNumDiff<Scalar, Dim, DoF>(
+              [point](Tangent const& x) { return LieGroup::exp(x) * point; },
+              t);
+
+      SOPHUS_TEST_APPROX(passed, J, J_num, kSmallEpsSqrt,
+                         "Dx_exp_x_times_point_at_0");
     }
     return passed;
   }
@@ -68,44 +148,44 @@ class LieGroupTests {
     for (LieGroup foo_T_bar : group_vec_) {
       LieGroup foo_T2_bar = foo_T_bar;
       SOPHUS_TEST_APPROX(passed, foo_T_bar.matrix(), foo_T2_bar.matrix(),
-                         kSmallEps, "Copy constructor: %\nvs\n %",
-                         transpose(foo_T_bar.matrix()),
-                         transpose(foo_T2_bar.matrix()));
+                         kSmallEps, "Copy constructor: {}\nvs\n {}",
+                         (transpose(foo_T_bar.matrix())),
+                         (transpose(foo_T2_bar.matrix())));
       LieGroup foo_T3_bar;
       foo_T3_bar = foo_T_bar;
       SOPHUS_TEST_APPROX(passed, foo_T_bar.matrix(), foo_T3_bar.matrix(),
-                         kSmallEps, "Copy assignment: %\nvs\n %",
-                         transpose(foo_T_bar.matrix()),
-                         transpose(foo_T3_bar.matrix()));
+                         kSmallEps, "Copy assignment: {}\nvs\n {}",
+                         (transpose(foo_T_bar.matrix())),
+                         (transpose(foo_T3_bar.matrix())));
 
       LieGroup foo_T4_bar(foo_T_bar.matrix());
       SOPHUS_TEST_APPROX(
           passed, foo_T_bar.matrix(), foo_T4_bar.matrix(), kSmallEps,
-          "Constructor from homogeneous matrix: %\nvs\n %",
-          transpose(foo_T_bar.matrix()), transpose(foo_T4_bar.matrix()));
+          "Constructor from homogeneous matrix: {}\nvs\n {}",
+          (transpose(foo_T_bar.matrix())), (transpose(foo_T4_bar.matrix())));
 
       Eigen::Map<LieGroup> foo_Tmap_bar(foo_T_bar.data());
       LieGroup foo_T5_bar = foo_Tmap_bar;
       SOPHUS_TEST_APPROX(
           passed, foo_T_bar.matrix(), foo_T5_bar.matrix(), kSmallEps,
-          "Assignment from Eigen::Map type: %\nvs\n %",
-          transpose(foo_T_bar.matrix()), transpose(foo_T5_bar.matrix()));
+          "Assignment from Eigen::Map type: {}\nvs\n {}",
+          (transpose(foo_T_bar.matrix())), (transpose(foo_T5_bar.matrix())));
 
       Eigen::Map<LieGroup const> foo_Tcmap_bar(foo_T_bar.data());
       LieGroup foo_T6_bar;
       foo_T6_bar = foo_Tcmap_bar;
       SOPHUS_TEST_APPROX(
           passed, foo_T_bar.matrix(), foo_T5_bar.matrix(), kSmallEps,
-          "Assignment from Eigen::Map type: %\nvs\n %",
-          transpose(foo_T_bar.matrix()), transpose(foo_T5_bar.matrix()));
+          "Assignment from Eigen::Map type: {}\nvs\n {}",
+          (transpose(foo_T_bar.matrix())), (transpose(foo_T5_bar.matrix())));
 
       LieGroup I;
       Eigen::Map<LieGroup> foo_Tmap2_bar(I.data());
       foo_Tmap2_bar = foo_T_bar;
-      SOPHUS_TEST_APPROX(passed, foo_Tmap2_bar.matrix(), foo_T_bar.matrix(),
-                         kSmallEps, "Assignment to Eigen::Map type: %\nvs\n %",
-                         transpose(foo_Tmap2_bar.matrix()),
-                         transpose(foo_T_bar.matrix()));
+      SOPHUS_TEST_APPROX(
+          passed, foo_Tmap2_bar.matrix(), foo_T_bar.matrix(), kSmallEps,
+          "Assignment to Eigen::Map type: {}\nvs\n {}",
+          (transpose(foo_Tmap2_bar.matrix())), (transpose(foo_T_bar.matrix())));
     }
     return passed;
   }
@@ -125,19 +205,14 @@ class LieGroupTests {
           },
           Scalar(0));
       SOPHUS_TEST_APPROX(passed, Gi, Gi2, kSmallEpsSqrt,
-                         "Dxi_exp_x_matrix_at_ case %", i);
+                         "Dxi_exp_x_matrix_at_ case {}", i);
     }
 
     return passed;
   }
 
   template <class G = LieGroup>
-  enable_if_t<std::is_same<G, Sophus::SO2<Scalar>>::value ||
-                  std::is_same<G, Sophus::SO3<Scalar>>::value ||
-                  std::is_same<G, Sophus::SE2<Scalar>>::value ||
-                  std::is_same<G, Sophus::SE3<Scalar>>::value,
-              bool>
-  additionalDerivativeTest() {
+  bool additionalDerivativeTest() {
     bool passed = true;
     for (size_t j = 0; j < tangent_vec_.size(); ++j) {
       Tangent a = tangent_vec_[j];
@@ -150,7 +225,7 @@ class LieGroupTests {
               a);
 
       SOPHUS_TEST_APPROX(passed, J, J_num, 3 * kSmallEpsSqrt,
-                         "Dx_exp_x case: %", j);
+                         "Dx_exp_x case: {}", j);
     }
 
     Tangent o;
@@ -176,20 +251,21 @@ class LieGroupTests {
               o);
 
       SOPHUS_TEST_APPROX(passed, J, J_num, kSmallEpsSqrt,
-                         "Dx_this_mul_exp_x_at_0 case: %", i);
+                         "Dx_this_mul_exp_x_at_0 case: {}", i);
     }
 
-    return passed;
-  }
+    for (size_t i = 0; i < group_vec_.size(); ++i) {
+      LieGroup T = group_vec_[i];
 
-  template <class G = LieGroup>
-  enable_if_t<!std::is_same<G, Sophus::SO2<Scalar>>::value &&
-                  !std::is_same<G, Sophus::SO3<Scalar>>::value &&
-                  !std::is_same<G, Sophus::SE2<Scalar>>::value &&
-                  !std::is_same<G, Sophus::SE3<Scalar>>::value,
-              bool>
-  additionalDerivativeTest() {
-    return true;
+      Eigen::Matrix<Scalar, DoF, DoF> J =
+          T.Dx_log_this_inv_by_x_at_this() * T.Dx_this_mul_exp_x_at_0();
+      Eigen::Matrix<Scalar, DoF, DoF> J_exp =
+          Eigen::Matrix<Scalar, DoF, DoF>::Identity();
+
+      SOPHUS_TEST_APPROX(passed, J, J_exp, kSmallEpsSqrt,
+                         "Dy_log_this_inv_by_at_x case: {}", i);
+    }
+    return passed;
   }
 
   bool productTest() {
@@ -201,7 +277,7 @@ class LieGroupTests {
       LieGroup mult = T1 * T2;
       T1 *= T2;
       SOPHUS_TEST_APPROX(passed, T1.matrix(), mult.matrix(), kSmallEps,
-                         "Product case: %", i);
+                         "Product case: {}", i);
     }
     return passed;
   }
@@ -212,7 +288,7 @@ class LieGroupTests {
     for (size_t i = 0; i < group_vec_.size(); ++i) {
       Transformation T1 = group_vec_[i].matrix();
       Transformation T2 = LieGroup::exp(group_vec_[i].log()).matrix();
-      SOPHUS_TEST_APPROX(passed, T1, T2, kSmallEps, "G - exp(log(G)) case: %",
+      SOPHUS_TEST_APPROX(passed, T1, T2, kSmallEps, "G - exp(log(G)) case: {}",
                          i);
     }
     return passed;
@@ -225,7 +301,7 @@ class LieGroupTests {
       Transformation exp_x = LieGroup::exp(omega).matrix();
       Transformation expmap_hat_x = (LieGroup::hat(omega)).exp();
       SOPHUS_TEST_APPROX(passed, exp_x, expmap_hat_x, Scalar(10) * kSmallEps,
-                         "expmap(hat(x)) - exp(x) case: %", i);
+                         "expmap(hat(x)) - exp(x) case: {}", i);
     }
     return passed;
   }
@@ -248,11 +324,12 @@ class LieGroupTests {
         Point gt_point1 = map(T, p);
 
         SOPHUS_TEST_APPROX(passed, point1, gt_point1, kSmallEps,
-                           "Transform point case: %", i);
+                           "Transform point case: {}", i);
         SOPHUS_TEST_APPROX(passed, hpoint1.hnormalized().eval(), gt_point1,
-                           kSmallEps, "Transform homogeneous point case: %", i);
+                           kSmallEps, "Transform homogeneous point case: {}",
+                           i);
         SOPHUS_TEST_APPROX(passed, pointmap1, gt_point1, kSmallEps,
-                           "Transform map point case: %", i);
+                           "Transform map point case: {}", i);
       }
     }
     return passed;
@@ -272,13 +349,41 @@ class LieGroupTests {
 
         SOPHUS_TEST_APPROX(passed, l_t.squaredDistance(p1_t),
                            static_cast<Scalar>(0), kSmallEps,
-                           "Transform line case (1st point) : %", i);
+                           "Transform line case (1st point) : {}", i);
         SOPHUS_TEST_APPROX(passed, l_t.squaredDistance(p2_t),
                            static_cast<Scalar>(0), kSmallEps,
-                           "Transform line case (2nd point) : %", i);
+                           "Transform line case (2nd point) : {}", i);
         SOPHUS_TEST_APPROX(passed, l_t.direction().squaredNorm(),
                            l.direction().squaredNorm(), kSmallEps,
-                           "Transform line case (direction) : %", i);
+                           "Transform line case (direction) : {}", i);
+      }
+    }
+    return passed;
+  }
+
+  bool planeActionTest() {
+    const int PointDim = Point::RowsAtCompileTime;
+    bool passed = point_vec_.size() >= PointDim;
+    for (size_t i = 0; i < group_vec_.size(); ++i) {
+      for (size_t j = 0; j + PointDim - 1 < point_vec_.size(); ++j) {
+        Point points[PointDim], points_t[PointDim];
+        for (int k = 0; k < PointDim; ++k) {
+          points[k] = point_vec_[j + k];
+          points_t[k] = group_vec_[i] * points[k];
+        }
+
+        Hyperplane const plane = through(points);
+
+        Hyperplane const plane_t = group_vec_[i] * plane;
+
+        for (int k = 0; k < PointDim; ++k) {
+          SOPHUS_TEST_APPROX(passed, plane_t.signedDistance(points_t[k]),
+                             static_cast<Scalar>(0.), kSmallEps,
+                             "Transform plane case (point #{}): {}", k, i);
+        }
+        SOPHUS_TEST_APPROX(passed, plane_t.normal().squaredNorm(),
+                           plane.normal().squaredNorm(), kSmallEps,
+                           "Transform plane case (normal): {}", i);
       }
     }
     return passed;
@@ -295,7 +400,7 @@ class LieGroupTests {
 
         Tangent tangent2 = LieGroup::vee(hati * hatj - hatj * hati);
         SOPHUS_TEST_APPROX(passed, tangent1, tangent2, kSmallEps,
-                           "Lie Bracket case: %", i);
+                           "Lie Bracket case: {}", i);
       }
     }
     return passed;
@@ -306,7 +411,7 @@ class LieGroupTests {
     for (size_t i = 0; i < tangent_vec_.size(); ++i) {
       SOPHUS_TEST_APPROX(passed, Tangent(tangent_vec_[i]),
                          LieGroup::vee(LieGroup::hat(tangent_vec_[i])),
-                         kSmallEps, "Hat-vee case: %", i);
+                         kSmallEps, "Hat-vee case: {}", i);
     }
     return passed;
   }
@@ -315,7 +420,7 @@ class LieGroupTests {
     bool passed = true;
     LieGroup* raw_ptr = nullptr;
     raw_ptr = new LieGroup();
-    SOPHUS_TEST_NEQ(passed, reinterpret_cast<std::uintptr_t>(raw_ptr), 0);
+    SOPHUS_TEST_NEQ(passed, reinterpret_cast<std::uintptr_t>(raw_ptr), 0, "");
     delete raw_ptr;
     return passed;
   }
@@ -334,10 +439,10 @@ class LieGroupTests {
         // Test boundary conditions ``alpha=0`` and ``alpha=1``.
         LieGroup foo_T_quiz = interpolate(foo_T_bar, foo_T_baz, Scalar(0));
         SOPHUS_TEST_APPROX(passed, foo_T_quiz.matrix(), foo_T_bar.matrix(),
-                           sqrt_eps);
+                           sqrt_eps, "");
         foo_T_quiz = interpolate(foo_T_bar, foo_T_baz, Scalar(1));
         SOPHUS_TEST_APPROX(passed, foo_T_quiz.matrix(), foo_T_baz.matrix(),
-                           sqrt_eps);
+                           sqrt_eps, "");
       }
     }
     for (Scalar alpha :
@@ -359,7 +464,8 @@ class LieGroupTests {
             LieGroup dash_T_quiz = interpolate(dash_T_foo * foo_T_bar,
                                                dash_T_foo * foo_T_baz, alpha);
             SOPHUS_TEST_APPROX(passed, dash_T_quiz.matrix(),
-                               (dash_T_foo * foo_T_quiz).matrix(), sqrt_eps);
+                               (dash_T_foo * foo_T_quiz).matrix(), sqrt_eps,
+                               "");
           }
           // test inverse-invariance:
           //
@@ -368,7 +474,7 @@ class LieGroupTests {
           LieGroup quiz_T_foo =
               interpolate(foo_T_bar.inverse(), foo_T_baz.inverse(), alpha);
           SOPHUS_TEST_APPROX(passed, quiz_T_foo.inverse().matrix(),
-                             foo_T_quiz.matrix(), sqrt_eps);
+                             foo_T_quiz.matrix(), sqrt_eps, "");
         }
       }
 
@@ -389,7 +495,8 @@ class LieGroupTests {
             LieGroup quiz_T_dash = interpolate(bar_T_foo * foo_T_dash,
                                                baz_T_foo * foo_T_dash, alpha);
             SOPHUS_TEST_APPROX(passed, quiz_T_dash.matrix(),
-                               (quiz_T_foo * foo_T_dash).matrix(), sqrt_eps);
+                               (quiz_T_foo * foo_T_dash).matrix(), sqrt_eps,
+                               "");
           }
         }
       }
@@ -405,32 +512,34 @@ class LieGroupTests {
 
         // test average({A, B}) == interp(A, B):
         LieGroup foo_T_quiz = interpolate(foo_T_bar, foo_T_baz, 0.5);
-        optional<LieGroup> foo_T_iaverage = iterativeMean(
+        std::optional<LieGroup> foo_T_iaverage = iterativeMean(
             std::array<LieGroup, 2>({{foo_T_bar, foo_T_baz}}), 20);
-        optional<LieGroup> foo_T_average =
+        std::optional<LieGroup> foo_T_average =
             average(std::array<LieGroup, 2>({{foo_T_bar, foo_T_baz}}));
         SOPHUS_TEST(passed, bool(foo_T_average),
-                    "log(foo_T_bar): %\nlog(foo_T_baz): %",
-                    transpose(foo_T_bar.log()), transpose(foo_T_baz.log()));
+                    "log(foo_T_bar): {}\nlog(foo_T_baz): {}",
+                    (transpose(foo_T_bar.log())), (transpose(foo_T_baz.log())),
+                    "");
         if (foo_T_average) {
           SOPHUS_TEST_APPROX(
               passed, foo_T_quiz.matrix(), foo_T_average->matrix(), sqrt_eps,
-              "log(foo_T_bar): %\nlog(foo_T_baz): %\n"
-              "log(interp): %\nlog(average): %",
-              transpose(foo_T_bar.log()), transpose(foo_T_baz.log()),
-              transpose(foo_T_quiz.log()), transpose(foo_T_average->log()));
+              "log(foo_T_bar): {}\nlog(foo_T_baz): {}\n"
+              "log(interp): {}\nlog(average): {}",
+              (transpose(foo_T_bar.log())), (transpose(foo_T_baz.log())),
+              (transpose(foo_T_quiz.log())), (transpose(foo_T_average->log())),
+              "");
         }
         SOPHUS_TEST(passed, bool(foo_T_iaverage),
-                    "log(foo_T_bar): %\nlog(foo_T_baz): %\n"
-                    "log(interp): %\nlog(iaverage): %",
-                    transpose(foo_T_bar.log()), transpose(foo_T_baz.log()),
-                    transpose(foo_T_quiz.log()),
-                    transpose(foo_T_iaverage->log()));
+                    "log(foo_T_bar): {}\nlog(foo_T_baz): {}\n"
+                    "log(interp): {}\nlog(iaverage): {}",
+                    (transpose(foo_T_bar.log())), (transpose(foo_T_baz.log())),
+                    (transpose(foo_T_quiz.log())),
+                    (transpose(foo_T_iaverage->log())), "");
         if (foo_T_iaverage) {
           SOPHUS_TEST_APPROX(
               passed, foo_T_quiz.matrix(), foo_T_iaverage->matrix(), sqrt_eps,
-              "log(foo_T_bar): %\nlog(foo_T_baz): %",
-              transpose(foo_T_bar.log()), transpose(foo_T_baz.log()));
+              "log(foo_T_bar): {}\nlog(foo_T_baz): {}",
+              (transpose(foo_T_bar.log())), (transpose(foo_T_baz.log())), "");
         }
       }
     }
@@ -443,18 +552,95 @@ class LieGroupTests {
     std::default_random_engine engine;
     for (int i = 0; i < 100; ++i) {
       LieGroup g = LieGroup::sampleUniform(engine);
-      SOPHUS_TEST_EQUAL(passed, g.params(), g.params());
+      SOPHUS_TEST_EQUAL(passed, g.params(), g.params(), "");
     }
     return passed;
   }
 
   template <class S = Scalar>
-  enable_if_t<std::is_floating_point<S>::value, bool> doAllTestsPass() {
+  std::enable_if_t<std::is_same<S, float>::value, bool> testSpline() {
+    // skip tests for Scalar == float
+    return true;
+  }
+
+  template <class S = Scalar>
+  std::enable_if_t<!std::is_same<S, float>::value, bool> testSpline() {
+    // run tests for Scalar != float
+    bool passed = true;
+
+    for (LieGroup const& T_world_foo : group_vec_) {
+      for (LieGroup const& T_world_bar : group_vec_) {
+        std::vector<LieGroup> control_poses;
+        control_poses.push_back(interpolate(T_world_foo, T_world_bar, 0.0));
+
+        for (double p = 0.2; p < 1.0; p += 0.2) {
+          LieGroup T_world_inter = interpolate(T_world_foo, T_world_bar, p);
+          control_poses.push_back(T_world_inter);
+        }
+
+        BasisSplineImpl<LieGroup> spline(control_poses, 1.0);
+
+        LieGroup T = spline.parent_T_spline(0.0, 1.0);
+        LieGroup T2 = spline.parent_T_spline(1.0, 0.0);
+
+        SOPHUS_TEST_APPROX(passed, T.matrix(), T2.matrix(), 10 * kSmallEpsSqrt,
+                           "parent_T_spline");
+
+        Transformation Dt_parent_T_spline = spline.Dt_parent_T_spline(0.0, 0.5);
+        Transformation Dt_parent_T_spline2 = curveNumDiff(
+            [&](double u_bar) -> Transformation {
+              return spline.parent_T_spline(0.0, u_bar).matrix();
+            },
+            0.5);
+        SOPHUS_TEST_APPROX(passed, Dt_parent_T_spline, Dt_parent_T_spline2,
+                           100 * kSmallEpsSqrt, "Dt_parent_T_spline");
+
+        Transformation Dt2_parent_T_spline =
+            spline.Dt2_parent_T_spline(0.0, 0.5);
+        Transformation Dt2_parent_T_spline2 = curveNumDiff(
+            [&](double u_bar) -> Transformation {
+              return spline.Dt_parent_T_spline(0.0, u_bar).matrix();
+            },
+            0.5);
+        SOPHUS_TEST_APPROX(passed, Dt2_parent_T_spline, Dt2_parent_T_spline2,
+                           20 * kSmallEpsSqrt, "Dt2_parent_T_spline");
+
+        for (double frac : {0.01, 0.25, 0.5, 0.9, 0.99}) {
+          double t0 = 1.0;
+          double delta_t = 0.1;
+          BasisSpline<LieGroup> spline(control_poses, t0, delta_t);
+          double t = t0 + frac * delta_t;
+
+          Transformation Dt_parent_T_spline = spline.Dt_parent_T_spline(t);
+          Transformation Dt_parent_T_spline2 = curveNumDiff(
+              [&](double t_bar) -> Transformation {
+                return spline.parent_T_spline(t_bar).matrix();
+              },
+              t);
+          SOPHUS_TEST_APPROX(passed, Dt_parent_T_spline, Dt_parent_T_spline2,
+                             80 * kSmallEpsSqrt, "Dt_parent_T_spline");
+
+          Transformation Dt2_parent_T_spline = spline.Dt2_parent_T_spline(t);
+          Transformation Dt2_parent_T_spline2 = curveNumDiff(
+              [&](double t_bar) -> Transformation {
+                return spline.Dt_parent_T_spline(t_bar).matrix();
+              },
+              t);
+          SOPHUS_TEST_APPROX(passed, Dt2_parent_T_spline, Dt2_parent_T_spline2,
+                             20 * kSmallEpsSqrt, "Dt2_parent_T_spline");
+        }
+      }
+    }
+    return passed;
+  }
+
+  template <class S = Scalar>
+  std::enable_if_t<std::is_floating_point<S>::value, bool> doAllTestsPass() {
     return doesLargeTestSetPass();
   }
 
   template <class S = Scalar>
-  enable_if_t<!std::is_floating_point<S>::value, bool> doAllTestsPass() {
+  std::enable_if_t<!std::is_floating_point<S>::value, bool> doAllTestsPass() {
     return doesSmallTestSetPass();
   }
 
@@ -467,6 +653,7 @@ class LieGroupTests {
     passed &= expLogTest();
     passed &= groupActionTest();
     passed &= lineActionTest();
+    passed &= planeActionTest();
     passed &= lieBracketTest();
     passed &= veeHatTest();
     passed &= newDeleteSmokeTest();
@@ -481,6 +668,9 @@ class LieGroupTests {
     passed &= expMapTest();
     passed &= interpolateAndMeanTest();
     passed &= testRandomSmoke();
+    passed &= testSpline();
+    passed &= leftJacobianTest();
+    passed &= moreJacobiansTest();
     return passed;
   }
 

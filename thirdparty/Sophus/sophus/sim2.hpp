@@ -1,8 +1,7 @@
 /// @file
 /// Similarity group Sim(2) - scaling, rotation and translation in 2d.
 
-#ifndef SOPHUS_SIM2_HPP
-#define SOPHUS_SIM2_HPP
+#pragma once
 
 #include "rxso2.hpp"
 #include "sim_details.hpp"
@@ -71,10 +70,13 @@ class Sim2Base {
   static int constexpr num_parameters = 4;
   /// Group transformations are 3x3 matrices.
   static int constexpr N = 3;
+  /// Points are 2-dimensional
+  static int constexpr Dim = 2;
   using Transformation = Matrix<Scalar, N, N>;
   using Point = Vector2<Scalar>;
   using HomogeneousPoint = Vector3<Scalar>;
   using Line = ParametrizedLine2<Scalar>;
+  using Hyperplane = Hyperplane2<Scalar>;
   using Tangent = Vector<Scalar, DoF>;
   using Adjoint = Matrix<Scalar, DoF, DoF>;
 
@@ -172,11 +174,11 @@ class Sim2Base {
   /// translation 2-vector and ``o`` a 2-column vector of zeros.
   ///
   SOPHUS_FUNC Transformation matrix() const {
-    Transformation homogenious_matrix;
-    homogenious_matrix.template topLeftCorner<2, 3>() = matrix2x3();
-    homogenious_matrix.row(2) =
+    Transformation homogeneous_matrix;
+    homogeneous_matrix.template topLeftCorner<2, 3>() = matrix2x3();
+    homogeneous_matrix.row(2) =
         Matrix<Scalar, 3, 1>(Scalar(0), Scalar(0), Scalar(1));
-    return homogenious_matrix;
+    return homogeneous_matrix;
   }
 
   /// Returns the significant first two rows of the matrix above.
@@ -187,10 +189,6 @@ class Sim2Base {
     matrix.col(2) = translation();
     return matrix;
   }
-
-  /// Assignment operator.
-  ///
-  SOPHUS_FUNC Sim2Base& operator=(Sim2Base const& other) = default;
 
   /// Assignment-like operator from OtherDerived.
   ///
@@ -223,8 +221,8 @@ class Sim2Base {
   ///   ``p_bar = bar_sR_foo * p_foo + t_bar``.
   ///
   template <typename PointDerived,
-            typename = typename std::enable_if<
-                IsFixedSizeVector<PointDerived, 2>::value>::type>
+            typename = typename std::enable_if_t<
+                IsFixedSizeVector<PointDerived, 2>::value>>
   SOPHUS_FUNC PointProduct<PointDerived> operator*(
       Eigen::MatrixBase<PointDerived> const& p) const {
     return rxso2() * p + translation();
@@ -233,8 +231,8 @@ class Sim2Base {
   /// Group action on homogeneous 2-points. See above for more details.
   ///
   template <typename HPointDerived,
-            typename = typename std::enable_if<
-                IsFixedSizeVector<HPointDerived, 3>::value>::type>
+            typename = typename std::enable_if_t<
+                IsFixedSizeVector<HPointDerived, 3>::value>>
   SOPHUS_FUNC HomogeneousPointProduct<HPointDerived> operator*(
       Eigen::MatrixBase<HPointDerived> const& p) const {
     const PointProduct<HPointDerived> tp =
@@ -255,6 +253,23 @@ class Sim2Base {
     return Line(rotatedLine.origin() + translation(), rotatedLine.direction());
   }
 
+  /// Group action on hyper-planes.
+  ///
+  /// This function rotates a hyper-plane ``n.x + d = 0`` by the Sim2
+  /// element:
+  ///
+  /// Normal vector ``n`` is rotated
+  /// Offset ``d`` is scaled and adjusted for translation
+  ///
+  /// Note that in 2d-case hyper-planes are just another parametrization of
+  /// lines
+  ///
+  SOPHUS_FUNC Hyperplane operator*(Hyperplane const& p) const {
+    Hyperplane const rotated = rxso2() * p;
+    return Hyperplane(rotated.normal(),
+                      rotated.offset() - translation().dot(rotated.normal()));
+  }
+
   /// Returns internal parameters of Sim(2).
   ///
   /// It returns (c[0], c[1], t[0], t[1]),
@@ -270,12 +285,36 @@ class Sim2Base {
   /// type of the multiplication is compatible with this SO2's Scalar type.
   ///
   template <typename OtherDerived,
-            typename = typename std::enable_if<
-                std::is_same<Scalar, ReturnScalar<OtherDerived>>::value>::type>
+            typename = typename std::enable_if_t<
+                std::is_same<Scalar, ReturnScalar<OtherDerived>>::value>>
   SOPHUS_FUNC Sim2Base<Derived>& operator*=(
       Sim2Base<OtherDerived> const& other) {
     *static_cast<Derived*>(this) = *this * other;
     return *this;
+  }
+
+  /// Returns derivative of  this * Sim2::exp(x)  wrt. x at x=0.
+  ///
+  SOPHUS_FUNC Matrix<Scalar, num_parameters, DoF> Dx_this_mul_exp_x_at_0()
+      const {
+    Matrix<Scalar, num_parameters, DoF> J;
+    J.template block<2, 2>(0, 0).setZero();
+    J.template block<2, 2>(0, 2) = rxso2().Dx_this_mul_exp_x_at_0();
+    J.template block<2, 2>(2, 2).setZero();
+    J.template block<2, 2>(2, 0) = rxso2().matrix();
+    return J;
+  }
+
+  /// Returns derivative of log(this^{-1} * x) by x at x=this.
+  ///
+  SOPHUS_FUNC Matrix<Scalar, DoF, num_parameters> Dx_log_this_inv_by_x_at_this()
+      const {
+    Matrix<Scalar, num_parameters, DoF> J;
+    J.template block<2, 2>(0, 0).setZero();
+    J.template block<2, 2>(0, 2) = rxso2().inverse().matrix();
+    J.template block<2, 2>(2, 0) = rxso2().Dx_log_this_inv_by_x_at_this();
+    J.template block<2, 2>(2, 2).setZero();
+    return J;
   }
 
   /// Setter of non-zero complex number.
@@ -318,7 +357,7 @@ class Sim2Base {
 
   /// Setter of complex number using rotation matrix ``R``, leaves scale as is.
   ///
-  SOPHUS_FUNC void setRotationMatrix(Matrix2<Scalar>& R) {
+  SOPHUS_FUNC void setRotationMatrix(Matrix2<Scalar> const& R) {
     rxso2().setRotationMatrix(R);
   }
 
@@ -329,7 +368,7 @@ class Sim2Base {
   ///
   SOPHUS_FUNC void setScale(Scalar const& scale) { rxso2().setScale(scale); }
 
-  /// Setter of complexnumber using scaled rotation matrix ``sR``.
+  /// Setter of complex number using scaled rotation matrix ``sR``.
   ///
   /// Precondition: The 2x2 matrix must be "scaled orthogonal"
   ///               and have a positive determinant.
@@ -364,6 +403,16 @@ class Sim2 : public Sim2Base<Sim2<Scalar_, Options>> {
   using Adjoint = typename Base::Adjoint;
   using RxSo2Member = RxSO2<Scalar, Options>;
   using TranslationMember = Vector2<Scalar, Options>;
+
+  using Base::operator=;
+
+  /// Define copy-assignment operator explicitly. The definition of
+  /// implicit copy assignment operator is deprecated in presence of a
+  /// user-declared copy constructor (-Wdeprecated-copy in clang >= 13).
+  SOPHUS_FUNC Sim2& operator=(Sim2 const& other) = default;
+
+  static int constexpr DoF = Base::DoF;
+  static int constexpr num_parameters = Base::num_parameters;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -450,6 +499,65 @@ class Sim2 : public Sim2Base<Sim2<Scalar_, Options>> {
   ///
   SOPHUS_FUNC TranslationMember const& translation() const {
     return translation_;
+  }
+
+  /// Returns derivative of exp(x) wrt. x_i at x=0.
+  ///
+  SOPHUS_FUNC static Sophus::Matrix<Scalar, num_parameters, DoF>
+  Dx_exp_x_at_0() {
+    Sophus::Matrix<Scalar, num_parameters, DoF> J;
+    J.template block<2, 2>(0, 0).setZero();
+    J.template block<2, 2>(0, 2) = RxSO2<Scalar>::Dx_exp_x_at_0();
+    J.template block<2, 2>(2, 0).setIdentity();
+    J.template block<2, 2>(2, 2).setZero();
+    return J;
+  }
+
+  /// Returns derivative of exp(x) wrt. x.
+  ///
+  SOPHUS_FUNC static Sophus::Matrix<Scalar, num_parameters, DoF> Dx_exp_x(
+      const Tangent& a) {
+    static Matrix2<Scalar> const I = Matrix2<Scalar>::Identity();
+    static Scalar const one(1.0);
+
+    Scalar const theta = a[2];
+    Scalar const sigma = a[3];
+
+    Matrix2<Scalar> const Omega = SO2<Scalar>::hat(theta);
+    Matrix2<Scalar> const Omega_dtheta = SO2<Scalar>::hat(one);
+    Matrix2<Scalar> const Omega2 = Omega * Omega;
+    Matrix2<Scalar> const Omega2_dtheta =
+        Omega_dtheta * Omega + Omega * Omega_dtheta;
+    Matrix2<Scalar> const W = details::calcW<Scalar, 2>(Omega, theta, sigma);
+    Vector2<Scalar> const upsilon = a.segment(0, 2);
+
+    Sophus::Matrix<Scalar, num_parameters, DoF> J;
+    J.template block<2, 2>(0, 0).setZero();
+    J.template block<2, 2>(0, 2) =
+        RxSO2<Scalar>::Dx_exp_x(a.template tail<2>());
+    J.template block<2, 2>(2, 0) = W;
+
+    Scalar A, B, C, A_dtheta, B_dtheta, A_dsigma, B_dsigma, C_dsigma;
+    details::calcW_derivatives(theta, sigma, A, B, C, A_dsigma, B_dsigma,
+                               C_dsigma, A_dtheta, B_dtheta);
+
+    J.template block<2, 1>(2, 2) = (A_dtheta * Omega + A * Omega_dtheta +
+                                    B_dtheta * Omega2 + B * Omega2_dtheta) *
+                                   upsilon;
+    J.template block<2, 1>(2, 3) =
+        (A_dsigma * Omega + B_dsigma * Omega2 + C_dsigma * I) * upsilon;
+
+    return J;
+  }
+
+  /// Returns derivative of exp(x) * p wrt. x_i at x=0.
+  ///
+  SOPHUS_FUNC static Sophus::Matrix<Scalar, 2, DoF> Dx_exp_x_times_point_at_0(
+      Point const& point) {
+    Sophus::Matrix<Scalar, 2, DoF> J;
+    J << Sophus::Matrix2<Scalar>::Identity(),
+        Sophus::RxSO2<Scalar>::Dx_exp_x_times_point_at_0(point);
+    return J;
   }
 
   /// Returns derivative of exp(x).matrix() wrt. ``x_i at x=0``.
@@ -615,9 +723,10 @@ class Sim2 : public Sim2Base<Sim2<Scalar_, Options>> {
 };
 
 template <class Scalar, int Options>
-Sim2<Scalar, Options>::Sim2() : translation_(TranslationMember::Zero()) {
+SOPHUS_FUNC Sim2<Scalar, Options>::Sim2()
+    : translation_(TranslationMember::Zero()) {
   static_assert(std::is_standard_layout<Sim2>::value,
-                "Assume standard layout for the use of offsetof check below.");
+                "Assume standard layout for the use of offset of check below.");
   static_assert(
       offsetof(Sim2, rxso2_) + sizeof(Scalar) * RxSO2<Scalar>::num_parameters ==
           offsetof(Sim2, translation_),
@@ -646,14 +755,11 @@ class Map<Sophus::Sim2<Scalar_>, Options>
   using Tangent = typename Base::Tangent;
   using Adjoint = typename Base::Adjoint;
 
-  // LCOV_EXCL_START
-  SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
-  // LCOV_EXCL_STOP
-
+  using Base::operator=;
   using Base::operator*=;
   using Base::operator*;
 
-  SOPHUS_FUNC Map(Scalar* coeffs)
+  SOPHUS_FUNC explicit Map(Scalar* coeffs)
       : rxso2_(coeffs),
         translation_(coeffs + Sophus::RxSO2<Scalar>::num_parameters) {}
 
@@ -701,7 +807,7 @@ class Map<Sophus::Sim2<Scalar_> const, Options>
   using Base::operator*=;
   using Base::operator*;
 
-  SOPHUS_FUNC Map(Scalar const* coeffs)
+  SOPHUS_FUNC explicit Map(Scalar const* coeffs)
       : rxso2_(coeffs),
         translation_(coeffs + Sophus::RxSO2<Scalar>::num_parameters) {}
 
@@ -723,5 +829,3 @@ class Map<Sophus::Sim2<Scalar_> const, Options>
   Map<Sophus::Vector2<Scalar> const, Options> const translation_;
 };
 }  // namespace Eigen
-
-#endif
