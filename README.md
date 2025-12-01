@@ -1,6 +1,6 @@
 # EZCALIB
 
-Camera calibration toolbox.
+Camera(s) calibration toolbox.
 
 Currently implemented distortion models:
 
@@ -22,10 +22,16 @@ Multi-camera calibration (stereo and N-cameras):
 
 ---
 
+## License
+
+EZCalib is released under [GPLv3 license](LICENSE).
+
+---
+
 ## Usage
 
 ``` bash
-$ ./path/to/ezcalib/build/ezcalib config_file_path.yaml  (optionnal: out_calib_file_path)
+$ ./path/to/ezcalib/build/ezcalib config_file_path.yaml  (optionnal: out_calib_file_path.yaml)
 ```
 
 We provide different config files as examples:
@@ -81,7 +87,6 @@ $ cd build
 $ cmake ..
 $ make -j$(nproc)
 ```
-
 
 ---
 
