@@ -7,6 +7,8 @@ echo ""
 # This script builds third-party libraries for Ubuntu 20.04 / 22.04.
 dir_path=$(pwd)
 
+mkdir thirdparty
+
 sudo apt update
 sudo apt install -y build-essential cmake git
 
