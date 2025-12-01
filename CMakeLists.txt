@@ -72,7 +72,7 @@ add_library(ethz_apriltag2_lib ${ETHZ_ATAG2_FILES})
 
 target_include_directories(ethz_apriltag2_lib
   PUBLIC
-    ethz_apriltag2/include
+    thirdparty/ethz_apriltag2/include
 )
 
 target_link_libraries(ethz_apriltag2_lib
