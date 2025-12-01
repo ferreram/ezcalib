@@ -1,3 +1,5 @@
 *.vscode/
 *build*/
 *install/
+thirdparty/ceres*
+thirdparty/Sophus*

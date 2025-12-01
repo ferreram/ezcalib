@@ -67,7 +67,7 @@ endif()
 ## Build ##
 ###########
 
-file(GLOB ETHZ_ATAG2_FILES "ethz_apriltag2/src/*.cc")
+file(GLOB ETHZ_ATAG2_FILES "thirdparty/ethz_apriltag2/src/*.cc")
 add_library(ethz_apriltag2_lib ${ETHZ_ATAG2_FILES})
 
 target_include_directories(ethz_apriltag2_lib
