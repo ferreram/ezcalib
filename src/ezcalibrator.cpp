@@ -132,7 +132,8 @@ EZCalibrator::computeCalibration()
 
   for (auto& calib_frame : m_pcamera->m_v_calib_frames)
   {
-    ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // auto to handle LocalParametrization / Manifold changes in Ceres
+    auto *local_param = new AutoDiffLocalLeftSE3();
     problem.AddParameterBlock(calib_frame.m_T_world_2_cam.data(), 7, local_param);
 
     for (size_t j = 0ul; j < v_tgt_coords.size(); ++j)
@@ -375,7 +376,8 @@ EZCalibrator::refineCalibration()
       continue;
     }
 
-    ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // auto to handle LocalParametrization / Manifold changes in Ceres
+    auto *local_param = new AutoDiffLocalLeftSE3();
     problem.AddParameterBlock(calib_frame.m_T_world_2_cam.data(), 7, local_param);
 
     for (size_t j = 0ul; j < v_tgt_coords.size(); ++j)
@@ -715,7 +717,8 @@ EZCalibrator::runMultiCameraCalib(std::vector<Camera>& _v_cameras)
     // v_opt_Tcic0.push_back(Tciw * Tc0w.inverse());
     v_opt_Tcic0.push_back(Sophus::SE3d::exp(med_T_log));
 
-    ceres::LocalParameterization *local_param = new AutoDiffLocalLeftSE3();
+    // auto to handle LocalParametrization / Manifold changes in Ceres
+    auto *local_param = new AutoDiffLocalLeftSE3();
     problem.AddParameterBlock(v_opt_Tcic0.back().data(), 7, local_param);
   }
 

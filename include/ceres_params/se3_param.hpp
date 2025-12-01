@@ -4,7 +4,42 @@
 
 #include <sophus/se3.hpp>
 
+#if CERES_VERSION_MAJOR >= 2 && CERES_VERSION_MINOR >= 1
+/*
+    SE(3) Parametrization such as: T + dT = Exp(dT) * T
+                                  Ty - Tx = Log(Ty * Tx^{-1})
+*/
+struct AutoDiffLocalLeftSE3_Kernel
+{
+  template<typename T>
+  bool Plus(const T* _x, const T* _delta, T* _x_plus_delta) const 
+  {
+    Eigen::Map<const Sophus::SE3<T>> ini_T(_x);
+    Eigen::Map<const Eigen::Matrix<T,6,1>> lie_delta(_delta);
 
+    Eigen::Map<Sophus::SE3<T>> opt_T(_x_plus_delta);
+
+    opt_T = Sophus::SE3<T>::exp(lie_delta) * ini_T;
+
+    return true;
+  }
+
+  template<typename T>
+  bool Minus(const T* _y, const T* _x, T* _y_minus_x) const 
+  {
+    Eigen::Map<const Sophus::SE3<T>> T_y(_y);
+    Eigen::Map<const Sophus::SE3<T>> T_x(_x);
+
+    Eigen::Map<Eigen::Matrix<T,6,1>> lie_delta(_y_minus_x);
+
+    lie_delta = (T_y * T_x.inverse()).log();
+
+    return true;
+  }
+};
+using AutoDiffLocalLeftSE3 = 
+  ceres::AutoDiffManifold<AutoDiffLocalLeftSE3_Kernel,7,6>;
+#else
 /*
     SE(3) Parametrization such as: T + dT = Exp(dT) * T
 */
@@ -22,9 +57,9 @@ struct AutoDiffLocalLeftSE3_Kernel
     return true;
   }
 };
-
 using AutoDiffLocalLeftSE3 = 
   ceres::AutoDiffLocalParameterization<AutoDiffLocalLeftSE3_Kernel,7,6>;
+#endif
 
 // struct AutoDiffLeftSE3RelativePoseError
 // {

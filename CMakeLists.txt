@@ -36,8 +36,9 @@ endif()
 
 #Sophus
 # First search for a custom build of Sophus within this project
-find_package(Sophus NO_DEFAULT_PATH PATHS ${PROJECT_SOURCE_DIR}/thirdparty/Sophus/build/)
-find_package(Sophus REQUIRED)
+find_package(Sophus REQUIRED
+  HINTS ${PROJECT_SOURCE_DIR}/thirdparty/Sophus/install/share/sophus/cmake
+)
 
 if (Sophus_FOUND)
   message("Found Sophus lib : ${Sophus_VERSION} - ${Sophus_DIR}")
@@ -46,8 +47,9 @@ endif (Sophus_FOUND)
 
 # Ceres
 # First search for a custom build of Ceres within this project
-find_package(Ceres NO_DEFAULT_PATH PATHS ${PROJECT_SOURCE_DIR}/thirdparty/ceres-solver/install/)
-find_package(Ceres REQUIRED)
+find_package(Ceres REQUIRED
+  HINTS ${PROJECT_SOURCE_DIR}/thirdparty/ceres-solver/install/lib/cmake/Ceres/
+)
 
 if (Ceres_FOUND)
   message(STATUS "Found Ceres lib : ${CERES_VERSION} - ${Ceres_DIR}")

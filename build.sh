@@ -39,11 +39,14 @@ sudo apt install -y libatlas-base-dev
 # SuiteSparse (optional)
 sudo apt install -y libsuitesparse-dev
 
-cd thirdparty/ceres-solver
+cd thirdparty
+git clone https://github.com/ceres-solver/ceres-solver
+cd ceres-solver
+git checkout 2.2.0
 mkdir build
 mkdir install
 cd build/
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=14 -DCMAKE_INSTALL_PREFIX="../install/" -DBUILD_EXAMPLES=OFF -DBUILD_BENCHMARKS=OFF -DBUILD_TESTING=OFF
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="../install/" -DBUILD_EXAMPLES=OFF -DBUILD_BENCHMARKS=OFF -DBUILD_TESTING=OFF
 make -j$(nproc) install
 cd $dir_path
 
@@ -51,12 +54,12 @@ echo ""
 echo "Building Sophus lib!"
 echo ""
 
-cd thirdparty/Sophus
-
+cd thirdparty
+git clone https://github.com/strasdat/Sophus
 mkdir build
 mkdir install
 cd build/
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="../install/"
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="../install/" -DBUILD_SOPHUS_TESTS=OFF
 make -j$(nproc) install
 cd $dir_path
 
