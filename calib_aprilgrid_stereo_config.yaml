@@ -22,6 +22,7 @@ target_type: "aprilgrid" # (chessboard / aprilgrid)
 target_nb_rows: 6
 target_nb_cols: 8
 
+# Follows Kalibr convention: https://github.com/ethz-asl/kalibr/wiki/calibration-targets
 tag_size: 0.06
 tag_space: 0.25 # ratio of size of tags wrt. size of space between tags.
 

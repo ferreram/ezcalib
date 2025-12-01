@@ -1,9 +1,7 @@
 %YAML 1.0
 ---
 
-# input_images_folder: "/data/ifremer/victor_stereo_cam/acquisition_mire/2021-10-18-06-31-22_images/left_images/"
-
-input_images_folder: "/data/hyperspectral/videos/calib/calib_images"
+input_images_folder: "/data/ifremer/victor_stereo_cam/acquisition_mire/2021-10-18-06-31-22_images/left_images/"
 
 use_mono_focal: 1 # (if 0: fx != fy)
 dist_model: "radtan4" # (rad1, rad2, rad3, radtan4, radtan5, radtan8, kannalabrandt)
@@ -15,6 +13,7 @@ target_type: "aprilgrid" # (chessboard / aprilgrid)
 target_nb_rows: 6
 target_nb_cols: 9
 
+# Follows Kalibr convention: https://github.com/ethz-asl/kalibr/wiki/calibration-targets
 tag_size: 0.035
 tag_space: 0.3 # ratio of size of tags wrt. size of space between tags.
 
