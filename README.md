@@ -34,16 +34,35 @@ We provide different config files as examples:
 - calib_chessboard_stereo_config.yaml
 - ...
 
+For multi-camera setups, we exepect as input one folder per camera with the same image names for images taken simultaneously. 
+For instance, for a stereo setup you must provide:
+
+- left_cam:
+  - image000.png
+  - image001.png
+  - image002.png
+  - ...
+  - imageXXX.png
+
+- right_cam:
+  - image000.png
+  - image001.png
+  - image002.png
+  - ...
+  - imageXXX.png
+
+Where each pair of imageXXX.png from the different folders will be considered as a stereo pair (i.e. images taken simultaneously).
+
 ---
 
 ## Dependencies
 
 
 * OpenCV 3 or 4
-* Ceres : https://github.com/ceres-solver/ceres-solver
+* Ceres (v2.1 or older) : https://github.com/ceres-solver/ceres-solver
 * Sophus : https://github.com/strasdat/Sophus
 
-Note: OpenCV 3 should also work, modifiy the CMakeLists.txt accordingly if you do not have OpenCV 4.  The current implementation does not yet follow the new Manifold paradigm but still relies on the LocalParametrization.
+The current implementation does not yet follow Ceres's new Manifold paradigm (mandatory since v2.2) but still relies on the LocalParametrization.
 
 
 
@@ -55,11 +74,11 @@ For convenience, we provide compatible version of ceres and sophus in the thirdp
 You can build them as follows:
 
 ``` bash
-$ chmod +x build_thirdparty.sh
-$ ./build_thirdparty.sh
+$ chmod +x build.sh
+$ ./build.sh
 ```
 
-If you wish to use your own version of ceres and sophus, you can skip this step.
+If you wish to use your own version of Opencv, Ceres and Sophus, you can skip this step.
 
 Note: If using Ubuntu 20.04 or higher, you might have to remove the "FindTBB.cmake" file in the "ceres-solver/cmake/" folder.
 

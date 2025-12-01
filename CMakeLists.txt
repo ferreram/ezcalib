@@ -30,7 +30,7 @@ endif (Eigen3_FOUND)
 find_package(OpenCV REQUIRED)
 
 if(OpenCV_VERSION_MAJOR LESS 3)
-  message( FATAL_ERROR "OpenCV 3 or 4 is required!  Current version : ${OpenCV_VERSION}" )
+  message(FATAL_ERROR "OpenCV 3 or 4 is required!  Current version : ${OpenCV_VERSION}" )
 endif()
 
 
@@ -50,7 +50,7 @@ find_package(Ceres NO_DEFAULT_PATH PATHS ${PROJECT_SOURCE_DIR}/thirdparty/ceres-
 find_package(Ceres REQUIRED)
 
 if (Ceres_FOUND)
-  message("Found Ceres lib : ${CERES_VERSION} - ${Ceres_DIR}")
+  message(STATUS "Found Ceres lib : ${CERES_VERSION} - ${Ceres_DIR}")
 endif (Ceres_FOUND)
 
 # OpenMP
@@ -65,9 +65,19 @@ endif()
 ## Build ##
 ###########
 
-# add_subdirectory(thirdparty/backward-cpp)
+file(GLOB ETHZ_ATAG2_FILES "ethz_apriltag2/src/*.cc")
+add_library(ethz_apriltag2_lib ${ETHZ_ATAG2_FILES})
 
-add_subdirectory(ethz_apriltag2)
+target_include_directories(ethz_apriltag2_lib
+  PUBLIC
+    ethz_apriltag2/include
+)
+
+target_link_libraries(ethz_apriltag2_lib
+  PRIVATE
+    ${OpenCV_LIBS}
+    Eigen3::Eigen
+)
 
 add_executable(${PROJECT_NAME} apps/ezcalib.cpp
               src/ezcalibrator.cpp
@@ -77,7 +87,6 @@ target_include_directories(${PROJECT_NAME}
   PUBLIC
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/ethz_apriltag2/include
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -85,8 +94,48 @@ target_link_libraries(${PROJECT_NAME}
     Ceres::ceres
     ${OpenCV_LIBS}
     stdc++fs
-    ethz_apriltag2
+    ethz_apriltag2_lib
     Sophus::Sophus
   INTERFACE
     Eigen3::Eigen
 )       
+
+
+# --- Installation Configuration ---
+
+# --- RPATH Configuration for the Executable ---
+# Tells the linker that the executable will look for shared libraries 
+# in the 'lib' folder sibling to the 'bin' folder where the executable resides.
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    INSTALL_RPATH "$ORIGIN/../lib"
+    INSTALL_RPATH_USE_LINK_PATH FALSE 
+    # Use $ORIGIN which is the directory of the executable at runtime.
+)
+
+# --- Installation Rules ---
+message(STATUS ${PROJECT_NAME} " install path: " ${CMAKE_INSTALL_PREFIX})
+
+# 1. Install the Executable to the 'bin' folder of the staging directory
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+install(FILES
+        $<TARGET_FILE:opencv_core>
+        $<TARGET_FILE:opencv_core>
+        $<TARGET_FILE:opencv_imgproc>
+        $<TARGET_FILE:opencv_calib3d>
+        $<TARGET_FILE:opencv_imgcodecs>
+        $<TARGET_FILE:opencv_highgui>
+        # Add all other OpenCV modules used (e.g., highgui, features2d, etc.)
+        DESTINATION lib
+    )
+# 2. Install the Dependent Libraries
+# This is where you list all non-system shared libraries needed by your executable.
+# They go into the 'lib' directory, which is the path defined in your RPATH.
+
+# Optional: Install any necessary resource files (e.g., images, configs)
+# install(DIRECTORY ${CMAKE_SOURCE_DIR}/settings 
+#     DESTINATION ${CMAKE_INSTALL_PREFIX}
+# )
+# install(DIRECTORY ${CMAKE_SOURCE_DIR}/resources 
+#     DESTINATION ${CMAKE_INSTALL_PREFIX}
+# )
