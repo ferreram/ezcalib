@@ -1,0 +1,122 @@
+Language: Cpp  # Spécifie que le langage de programmation est C++
+
+BasedOnStyle: Google  # Utilise le style de formatage Google comme base
+
+AccessModifierOffset: "-2"  # Décale l'indentation des modificateurs d'accès à gauche de 2 espaces
+AlignAfterOpenBracket: Align  # Aligne les éléments après une parenthèse ouvrante
+AlignConsecutiveMacros: "true"  # Aligne les macros consécutives
+AlignConsecutiveAssignments: "true"  # Aligne les affectations consécutives
+AlignConsecutiveDeclarations: "true"  # Aligne les déclarations consécutives
+AlignEscapedNewlines: Left  # Aligne les nouvelles lignes échappées à gauche
+AlignOperands: "true"  # Aligne les opérandes sur les lignes consécutives
+AlignTrailingComments: "true"  # Aligne les commentaires à la fin de ligne
+AllowAllArgumentsOnNextLine: "true"  # Autorise tous les arguments d'une fonction sur la ligne suivante
+AllowAllConstructorInitializersOnNextLine: "false"  # N'autorise pas les initialisateurs de constructeur sur une ligne
+AllowAllParametersOfDeclarationOnNextLine: "true"  # Autorise tous les paramètres de déclaration sur la ligne suivante
+AllowShortBlocksOnASingleLine: Empty  # Permet les blocs vides sur une seule ligne
+AllowShortFunctionsOnASingleLine: None  # N'autorise pas les fonctions courtes sur une seule ligne
+AllowShortIfStatementsOnASingleLine: Never  # N'autorise jamais les instructions if courtes sur une seule ligne
+AllowShortLoopsOnASingleLine: "false"  # N'autorise pas les boucles courtes sur une seule ligne
+AlwaysBreakAfterReturnType: TopLevelDefinitions  # Toujours briser après le type de retour pour les définitions de niveau supérieur
+AlwaysBreakBeforeMultilineStrings: "false"  # N'oblige pas une rupture avant les chaînes multilignes
+AlwaysBreakTemplateDeclarations: "Yes"  # Toujours briser les déclarations de templates
+BinPackArguments: "false"  # Ne compresse pas les arguments sur une seule ligne
+BinPackParameters: "false"  # Ne compresse pas les paramètres sur une seule ligne
+
+BraceWrapping:  # Configuration du placement des accolades
+  AfterClass: "true"  # Briser après la déclaration de classe
+  AfterControlStatement: "true"  # Briser après les instructions de contrôle
+  AfterEnum: "true"  # Briser après une énumération
+  AfterFunction: "true"  # Briser après une déclaration de fonction
+  AfterNamespace: "true"  # Briser après une déclaration de namespace
+  AfterStruct: "true"  # Briser après une déclaration de structure
+  AfterUnion: "true"  # Briser après une déclaration d'union
+  BeforeCatch: "true"  # Briser avant un bloc catch
+  BeforeElse: "true"  # Briser avant un bloc else
+  IndentBraces: "false"  # Ne pas indenter les accolades
+
+BreakBeforeBinaryOperators: All  # Forcer une rupture de ligne avant tous les opérateurs binaires
+BreakBeforeBraces: Custom  # Utiliser un style personnalisé pour le placement des accolades
+BreakBeforeTernaryOperators: "true"  # Forcer une rupture de ligne avant les opérateurs ternaires
+BreakConstructorInitializers: BeforeComma  # Briser les initialisateurs de constructeur avant la virgule
+BreakInheritanceList: BeforeComma  # Briser la liste d'héritage avant la virgule
+
+ColumnLimit: "120"  # Limite de colonne fixée à 120 caractères
+CommentPragmas: "^ IWYU pragma:"  # Rechercher les commentaires de pragma IWYU
+CompactNamespaces: "false"  # Ne pas compacter les espaces de noms
+ConstructorInitializerAllOnOneLineOrOnePerLine: "false"  # N'autorise pas les initialisateurs de constructeur sur une seule ligne
+
+Cpp11BracedListStyle: "true"  # Utiliser le style de liste d'initialisation C++11
+FixNamespaceComments: "true"  # Corrige les commentaires de namespace
+
+ForEachMacros: [foreach, Q_FOREACH, BOOST_FOREACH]  # Définit des macros de boucle foreach
+
+IncludeBlocks: Regroup  # Regrouper les blocs d'inclusions
+IncludeCategories:  # Catégories pour trier les inclusions
+
+  - Regex: '^<rclcpp/.*>'  # Inclut les fichiers de la bibliothèque rclcpp
+    Priority: 2  # Priorité plus basse que les fichiers standards
+  - Regex: '^<.*/msg/.*>'  # Inclut les fichiers contenant "msg"
+    Priority: 5
+  - Regex: '^<ifr_.*>'  # Inclut les fichiers de la bibliothèque ifr_
+    Priority: 3  # Priorité plus basse que les fichiers standards  
+  - Regex: '^<.*>'  # Inclut tous les fichiers d'en-tête standard (incluant les bibliothèques standard)
+    Priority: 1  # Priorité élevée pour les en-têtes standards
+  - Regex: '^<.*\.h>'  # Inclut les fichiers .h
+    Priority: 4  # Priorité plus basse
+  - Regex: '<.*'  # Inclut tous les fichiers sans un "/"
+    Priority: 6  # Priorité plus basse
+  - Regex: '^"ifr_.*'  # Inclut les fichiers locaux qui commencent par ifr_
+    Priority: 7  
+  - Regex: '^"ifr_.*'  # Inclut les fichiers locaux qui commencent par ifr_
+    Priority: 8
+  - Regex: '^".*/.*'  # Inclut d'autres fichiers locaux
+    Priority: 9
+  - Regex: '^"../.*"'  # Inclut les fichiers relatifs
+    Priority: 10
+
+IndentCaseLabels: "false"  # Ne pas indenter les étiquettes de cas
+IndentPPDirectives: AfterHash  # Indenter les directives de préprocesseur après le # (dièse)
+IndentWidth: "2"  # Largeur d'indentation fixée à 2 espaces
+IndentWrappedFunctionNames: "false"  # Ne pas indenter les noms de fonctions enveloppées
+
+KeepEmptyLinesAtTheStartOfBlocks: "false"  # Ne pas garder les lignes vides au début des blocs
+MaxEmptyLinesToKeep: "1"  # Garder un maximum d'une ligne vide
+NamespaceIndentation: None  # Pas d'indentation pour les espaces de noms
+
+PenaltyBreakBeforeFirstCallParameter: 1  # Pénalité pour briser avant le premier paramètre d'appel
+PenaltyBreakComment: 300  # Pénalité pour briser un commentaire
+PenaltyBreakFirstLessLess: 100  # Pénalité pour briser le premier <<
+PenaltyBreakString: 1000  # Pénalité pour briser une chaîne
+PenaltyExcessCharacter: 1000000  # Pénalité pour les caractères en excès
+PenaltyReturnTypeOnItsOwnLine: 200  # Pénalité pour mettre le type de retour sur sa propre ligne
+
+PointerAlignment: Left  # Aligne les pointeurs à gauche
+ReflowComments: "true"  # Reflète les commentaires pour s'adapter à la largeur de colonne
+SortIncludes: "true"  # Trie les inclusions automatiquement
+SortUsingDeclarations: "true"  # Trie les déclarations d'utilisation automatiquement
+
+SpaceAfterCStyleCast: "false"  # Pas d'espace après un cast de style C
+SpaceAfterLogicalNot: "false"  # Pas d'espace après l'opérateur logique NOT (!)
+SpaceAfterTemplateKeyword: "true"  # Espace après le mot-clé template
+SpaceBeforeAssignmentOperators: "true"  # Espace avant les opérateurs d'assignation
+SpaceBeforeCpp11BracedList: "true"  # Espace avant les listes d'initialisation C++11
+SpaceBeforeCtorInitializerColon: "true"  # Espace avant le deux-points des initialisateurs de constructeur
+SpaceBeforeInheritanceColon: "true"  # Espace avant le deux-points de l'héritage
+SpaceBeforeRangeBasedForLoopColon: "true"  # Espace avant le deux-points de la boucle for basée sur une plage
+
+SpaceInEmptyParentheses: "false"  # Pas d'espace dans les parenthèses vides
+SpacesBeforeTrailingComments: "2"  # Deux espaces avant les commentaires en fin de ligne
+SpacesInAngles: "false"  # Pas d'espace dans les crochets angulaires
+SpacesInCStyleCastParentheses: "false"  # Pas d'espace dans les parenthèses des casts de style C
+SpacesInContainerLiterals: "false"  # Pas d'espace dans les littéraux de conteneur
+SpacesInParentheses: "false"  # Pas d'espace dans les parenthèses
+SpacesInSquareBrackets: "false"  # Pas d'espace dans les crochets carrés
+
+SpaceBeforeParens: ControlStatements  # Espace avant les parenthèses pour les instructions de contrôle
+Standard: Cpp11  # Spécifie la norme C++ utilisée (C++11)
+StatementMacros: [Q_UNUSED, Q_OBJECT]  # Définit des macros de déclaration
+TabWidth: "2"  # Largeur de tabulation fixée à 2 espaces
+UseTab: Never  # N'utilise jamais de tabulations
+DerivePointerAlignment: false  # Ne pas dériver l'alignement des pointeurs
+
