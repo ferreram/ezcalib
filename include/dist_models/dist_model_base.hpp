@@ -1,33 +1,33 @@
 #pragma once
 
-#include "ceres_params/se3_param.hpp"
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#include "ceres_params/se3_param.hpp"
 
 class DistParam
 {
 public:
+  virtual ~DistParam()
+  {
+  }
 
-  virtual ~DistParam() 
-  {}
-
-  virtual void displayParams() const = 0;
+  virtual void displayParams() const        = 0;
   virtual void displayParamsWithStd() const = 0;
 
   virtual Eigen::Vector2d distortCamPoint(const double _x, const double _y) const = 0;
-  virtual Eigen::Vector2d distortCamPoint(const Eigen::Vector2d& _cam_pt) const = 0;
-  virtual Eigen::Vector2d distortCamPoint(const Eigen::Vector3d& _cam_pt) const = 0;
+  virtual Eigen::Vector2d distortCamPoint(const Eigen::Vector2d& _cam_pt) const   = 0;
+  virtual Eigen::Vector2d distortCamPoint(const Eigen::Vector3d& _cam_pt) const   = 0;
 
   Eigen::Vector2d undistortCamPoint(const Eigen::Vector3d& _cam_pt) const
   {
     const double inv_z = 1. / _cam_pt[2];
-    return undistortCamPoint(_cam_pt[0]*inv_z,_cam_pt[1]*inv_z);
+    return undistortCamPoint(_cam_pt[0] * inv_z, _cam_pt[1] * inv_z);
   }
 
   Eigen::Vector2d undistortCamPoint(const Eigen::Vector2d& _cam_pt) const
   {
-    return undistortCamPoint(_cam_pt[0],_cam_pt[1]);
+    return undistortCamPoint(_cam_pt[0], _cam_pt[1]);
   }
 
   Eigen::Vector2d undistortCamPoint(const double _campt_x, const double _campt_y) const
@@ -36,33 +36,39 @@ public:
     // central differences, 100 iterations should be enough even for complex
     // camera models with higher order terms.
     const size_t kNumIterations = 100;
-    const double kMaxStepNorm = 1e-10;
-    const double kRelStepSize = 1e-6;
+    const double kMaxStepNorm   = 1e-10;
+    const double kRelStepSize   = 1e-6;
 
-    const Eigen::Vector2d x0(_campt_x,_campt_y);
-    Eigen::Vector2d x(x0);
-    Eigen::Matrix2d J;
+    // Solve for x_u in xd = distortCamPoint(xu) using Newton's method
+    // with numerically estimated Jacobian.
+    // Initial guess is xu = xd (i.e. undistorted point is initially set to distorted point).
+    const Eigen::Vector2d x_ini(_campt_x, _campt_y);
+    Eigen::Vector2d       x(x_ini);
+    Eigen::Matrix2d       J;
 
-    for (size_t i = 0; i < kNumIterations; ++i) 
+    for (size_t i = 0; i < kNumIterations; ++i)
     {
-      const double step0 = std::max(std::numeric_limits<double>::epsilon(),
-                                    std::abs(kRelStepSize * x[0]));
-      const double step1 = std::max(std::numeric_limits<double>::epsilon(),
-                                    std::abs(kRelStepSize * x[1]));
-      
-      const Eigen::Vector2d dx = distortCamPoint(x[0],x[1]) - x;
-      const Eigen::Vector2d dx0b = distortCamPoint(x[0]-step0,x[1]-step0) - x;
-      const Eigen::Vector2d dx0f = distortCamPoint(x[0]+step0,x[1]+step0) - x;
-      const Eigen::Vector2d dx1b = distortCamPoint(x[0]-step1,x[1]-step1) - x;
-      const Eigen::Vector2d dx1f = distortCamPoint(x[0]+step1,x[1]+step1) - x;
+      const double step0 = std::max(std::numeric_limits<double>::epsilon(), std::abs(kRelStepSize * x[0]));
+      const double step1 = std::max(std::numeric_limits<double>::epsilon(), std::abs(kRelStepSize * x[1]));
 
-      J(0, 0) = 1. + (dx0f[0] - dx0b[0]) / (2. * step0);
-      J(0, 1) = (dx1f[0] - dx1b[0]) / (2. * step1);
-      J(1, 0) = (dx0f[1] - dx0b[1]) / (2. * step0);
-      J(1, 1) = 1. + (dx1f[1] - dx1b[1]) / (2. * step1);
-      const Eigen::Vector2d step_x = J.inverse() * (x + dx - x0);
+      const Eigen::Vector2d xd   = distortCamPoint(x[0], x[1]);
+      const Eigen::Vector2d dx0b = distortCamPoint(x[0] - step0, x[1]) - x;
+      const Eigen::Vector2d dx0f = distortCamPoint(x[0] + step0, x[1]) - x;
+      const Eigen::Vector2d dx1b = distortCamPoint(x[0], x[1] - step1) - x;
+      const Eigen::Vector2d dx1f = distortCamPoint(x[0], x[1] + step1) - x;
+
+      const double step0_inv = 1. / (2. * step0);
+      const double step1_inv = 1. / (2. * step1);
+
+      J(0, 0) = 1. + (dx0f[0] - dx0b[0]) * step0_inv;
+      J(0, 1) = (dx1f[0] - dx1b[0]) * step1_inv;
+      J(1, 0) = (dx0f[1] - dx0b[1]) * step0_inv;
+      J(1, 1) = 1. + (dx1f[1] - dx1b[1]) * step1_inv;
+
+      const Eigen::Vector2d step_x = J.partialPivLu().solve(xd - x_ini);
       x -= step_x;
-      if (step_x.squaredNorm() < kMaxStepNorm) {
+      if (step_x.squaredNorm() < kMaxStepNorm)
+      {
         break;
       }
     }
@@ -70,11 +76,12 @@ public:
     return x;
   }
 
-  virtual ceres::CostFunction*
-  createCeresCostFunction(const double _u, const double _v, const Eigen::Vector3d& _wpt) const = 0;
+  virtual ceres::CostFunction* createCeresCostFunction(const double           _u,
+                                                       const double           _v,
+                                                       const Eigen::Vector3d& _wpt) const
+      = 0;
 
-  virtual void
-  resetParameters(const std::vector<double> _v_dist_coefs) = 0;
+  virtual void resetParameters(const std::vector<double> _v_dist_coefs) = 0;
 
   virtual std::vector<double> getDistParameters() const = 0;
 
@@ -83,25 +90,28 @@ public:
     return m_nb_params;
   }
 
-  std::vector<double> getDistParamsStd() const {
+  std::vector<double> getDistParamsStd() const
+  {
     return m_vdist_params_std;
   }
 
   void setDistParamsStd(const std::vector<double>& _cov_dist)
   {
-    for (int i=0; i < m_nb_params; ++i)
+    for (int i = 0; i < m_nb_params; ++i)
     {
-      m_vdist_params_std.push_back(std::sqrt(_cov_dist[m_nb_params*i+i]));
+      m_vdist_params_std.push_back(std::sqrt(_cov_dist[m_nb_params * i + i]));
     }
   }
 
 protected:
   DistParam(const int _nb_params, const bool _use_mono_focal)
-    : m_nb_params(_nb_params), m_use_mono_focal(_use_mono_focal)
-    , m_vdist_params_std(m_nb_params, 0.)
-  {}
+      : m_nb_params(_nb_params)
+      , m_use_mono_focal(_use_mono_focal)
+      , m_vdist_params_std(m_nb_params, 0.)
+  {
+  }
 
-  int m_nb_params = -1;
+  int  m_nb_params = -1;
   bool m_use_mono_focal;
 
   std::vector<double> m_vdist_params_std;
